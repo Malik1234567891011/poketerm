@@ -46,8 +46,9 @@ Uninstall with `~/poketerm/uninstall.sh`. It removes exactly those pieces.
   | Gengar | Shadow Ball |
   | Gastly | Smog clouds |
   | Mimikyu | Shadow Claw |
+  | Darkrai | Dark Void: a black hole opens, drinks in the light and collapses. Its party mates sleep with red nightmare Zs |
 
-  The ghosts (Gengar, Gastly, Mimikyu) don't hop at all: they vanish and reappear.
+  The ghosts and Darkrai don't hop at all: they vanish and reappear.
 - **Living ink**: text printed in four exact colours becomes an animated material.
   The shader recognises the colour on the GPU, so any program can use it.
 
@@ -100,7 +101,7 @@ poke off / poke on           disable / enable the shader
 poke reload                  rebuild the shader (new tabs/windows pick it up)
 ```
 
-Roster: pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squirtle snorlax mew psyduck mimikyu gastly
+Roster: pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squirtle snorlax mew psyduck mimikyu gastly darkrai
 
 Set `POKETERM_GREET=0` in `~/.zshrc` before the source line to skip encounters.
 

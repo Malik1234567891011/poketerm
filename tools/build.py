@@ -80,6 +80,7 @@ def glsl_party(names):
         "// sprites: PMD SpriteCollab (CC BY-NC 4.0), credits in art/pmd/*/credits.txt",
         f"#define PARTY_N {len(names)}",
         f"#define PARTY_HAS_JIGGLY {'true' if 'jigglypuff' in names else 'false'}",
+        f"#define PARTY_HAS_DARKRAI {'true' if 'darkrai' in names else 'false'}",
         f"#define PARTY_HAS_SNORLAX {'true' if 'snorlax' in names else 'false'}",
         f"#define PARTY_ELECTRIC {'true' if {'pikachu', 'voltorb'} & set(names) else 'false'}",
         "\n".join(f"#define SP_{n.upper()} {i}" for i, n in enumerate(pmd.ROSTER)),

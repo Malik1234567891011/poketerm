@@ -93,6 +93,7 @@ vec3 typeCol(int sp) {
     if (sp == SP_EEVEE) return vec3(0.95, 0.75, 0.45);
     if (sp == SP_SNORLAX) return vec3(0.5, 0.8, 0.85);
     if (sp == SP_DITTO) return vec3(0.82, 0.62, 0.95);
+    if (sp == SP_DARKRAI) return vec3(0.85, 0.18, 0.3);
     return vec3(0.62, 0.38, 0.95);  // the ghosts
 }
 
@@ -326,6 +327,28 @@ vec3 signature(vec3 col, int sp, vec2 fc, vec2 feet, vec2 b, float zt, float see
             float h = hash11(seed + float(i) * 2.9), ang = float(i) * 0.9 + h;
             vec2 c = b + vec2(cos(ang) * zt * 80.0, sin(ang) * zt * 40.0 + zt * 20.0);
             col = mix(col, mix(vec3(0.5, 0.3, 0.7), vec3(0.75, 0.55, 0.9), h), step(length(q - c), 7.0 + zt * 16.0) * dither(fc, life * 0.9));
+        }
+    } else if (sp == SP_DARKRAI) {
+        // Dark Void: a black hole opens in front of it, drinks in the light, then collapses
+        vec2 c = b + vec2(dir * 30.0, 2.0);
+        vec2 d = q - c;
+        float r = length(d);
+        float R = 30.0 * smoothstep(0.0, 0.3, zt) * (1.0 - smoothstep(0.6, 0.85, zt));
+        if (r < R + 14.0) {
+            float arm = 0.5 + 0.5 * sin((atan(d.y, d.x) + 6.0 / (r * 0.08 + 1.0) - iTime * 5.0) * 3.0);
+            col = mix(col, mix(vec3(0.35, 0.05, 0.12), vec3(0.85, 0.15, 0.25), arm), (1.0 - smoothstep(R, R + 14.0, r)) * 0.8 * arm);
+            if (r < R) col = vec3(0.02, 0.0, 0.03);
+            col = mix(col, vec3(1.0, 0.3, 0.35), (1.0 - smoothstep(0.0, PX, abs(r - R))) * step(1.0, R));
+        }
+        if (zt < 0.8) for (int i = 0; i < 8; i++) {   // light pulled into the void
+            float h = hash11(seed + float(i) * 3.7);
+            float ph = fract(zt * 1.6 + h);
+            vec2 mp = c + rot(h * 6.283 + ph * 3.0) * vec2(70.0 * (1.0 - ph), 0.0);
+            col = mix(col, (i % 2 == 0) ? vec3(0.4, 0.9, 1.0) : vec3(0.9, 0.2, 0.3), pdot(fc, mp, 1.0));
+        }
+        if (zt > 0.8) {
+            float z = (zt - 0.8) / 0.2;
+            col = mix(col, vec3(0.6, 0.1, 0.25), (1.0 - smoothstep(0.0, PX * 1.5, abs(r - z * 90.0))) * (1.0 - z));
         }
     } else if (sp == SP_MIMIKYU) {
         // Shadow Claw: three slashes rake the air in front of it
@@ -689,7 +712,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                         vec2 zp = pos + vec2(hw * 0.2 + ph * 30.0 + float(i) * 4.0, spriteH * 0.8 + ph * 60.0 + lift);
                         float zs = floor(PX * (sleeping ? 0.9 + ph * 0.9 : 1.4));
                         float g = sleeping ? zGlyph(fc - zp, zs) : noteGlyph(fc - zp - vec2(hw * 0.5, 0.0), zs);
-                        vec3 gc = sleeping ? vec3(0.88, 0.94, 1.0) : hsv(fract(ph + float(i) * 0.3), 0.4, 1.0);
+                        // with Darkrai around, everyone else has nightmares
+                        vec3 gc = sleeping ? ((PARTY_HAS_DARKRAI && sp != SP_DARKRAI) ? vec3(0.9, 0.25, 0.32) : vec3(0.88, 0.94, 1.0)) : hsv(fract(ph + float(i) * 0.3), 0.4, 1.0);
                         col = mix(col, gc, g * min((1.0 - ph) * 1.6, 1.0));
                     }
                 }

@@ -19,9 +19,9 @@ ROSTER = {
     "pikachu": "Shock", "gengar": "Charge", "jigglypuff": "Charge", "ditto": "Charge",
     "voltorb": "Charge", "eevee": "TailWhip", "charmander": "Charge", "bulbasaur": "Charge",
     "squirtle": "Charge", "snorlax": "Charge", "mew": "Charge", "psyduck": "Charge",
-    "mimikyu": "Charge", "gastly": "Lick",
+    "mimikyu": "Charge", "gastly": "Lick", "darkrai": "SpAttack",
 }
-GHOSTS = {"gengar", "gastly", "mimikyu"}
+GHOSTS = {"gengar", "gastly", "mimikyu", "darkrai"}  # float, and vanish instead of hopping
 ANIMS = ["Walk", "Idle", "Sleep", "Hop", "Hurt", "special"]
 
 

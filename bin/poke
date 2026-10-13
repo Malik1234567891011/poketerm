@@ -7,7 +7,7 @@
 #   poke off | on              turn the shader effects off / back on
 #   poke reload                rebuild the shader and reload Ghostty
 H=${POKETERM_HOME:-${0:A:h:h}}
-SPECIES=(pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squirtle snorlax mew psyduck mimikyu gastly)
+SPECIES=(pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squirtle snorlax mew psyduck mimikyu gastly darkrai)
 
 reload() {
   local py=$H/tools/.venv/bin/python; [[ -x $py ]] || py=python3
