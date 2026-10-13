@@ -153,7 +153,7 @@ def timeline(name):
 
 
 class Renderer:
-    def __init__(self, cols=92, rows=22):
+    def __init__(self, cols=int(os.environ.get("COLS", 92)), rows=int(os.environ.get("ROWS", 22))):
         self.font = ImageFont.truetype(FONT, PT * SCALE)
         asc, desc = self.font.getmetrics()
         self.cw = round(self.font.getlength("M"))
@@ -249,6 +249,7 @@ class Renderer:
 
 
 def from_ansi(raw, cols=92, rows=22):
+    cols, rows = int(os.environ.get("COLS", cols)), int(os.environ.get("ROWS", rows))
     """Run raw terminal output through pyte and return a Term snapshot."""
     import pyte
     scr = pyte.Screen(cols, rows)
@@ -267,6 +268,7 @@ def from_ansi(raw, cols=92, rows=22):
             line.append((ch.data or " ", fg))
         T.lines[y] = line
     T.row, T.col = scr.cursor.y, scr.cursor.x
+    T.visible = not scr.cursor.hidden
     return T
 
 

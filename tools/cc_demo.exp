@@ -1,14 +1,10 @@
 #!/usr/bin/expect -f
 # Drive a real Claude Code session for screenshots: trust folder, ask one tiny prompt.
-set timeout 60
-spawn claude
-expect {
-  "trust this folder" { sleep 0.5; send "\033\[B"; sleep 0.3; send "\r"; exp_continue }
-  "for shortcuts" {}
-  timeout {}
-}
-sleep 2
-send "In one short sentence, what is a Pikachu?"
-sleep 0.6
-send "\r"
+# Raw mode + immediate interact so the terminal's query replies reach claude untouched.
+stty raw -echo
+spawn -noecho claude
+after 6000 { send "\033\[B" }
+after 6500 { send "\r" }
+after 10000 { send "In one short sentence, what is a Pikachu?" }
+after 10800 { send "\r" }
 interact
