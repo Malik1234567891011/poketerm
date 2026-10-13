@@ -726,7 +726,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                 vec2 bodyP = pos + vec2(0.0, lift + spriteH * 0.45);
                 float face = flip ? -1.0 : 1.0;
                 col = signature(col, sp, fc, feetP, bodyP, zt, fk * 17.0 + floor(t / 4.0) + iTimeCursorChange, face);
-                if (hop && visible && tk < HOP_T + 0.4 && !S_GHOST[k] && sp != SP_PIKACHU && sp != SP_SNORLAX)
+                if (hop && visible && tk < HOP_T + 0.4 && !S_GHOST[k] && sp != SP_PIKACHU && sp != SP_SNORLAX && sp != SP_SASUKE && sp != SP_ZORO)
                     col = hopTrail(col, sp, fc, A + vec2(cx, spriteH * 0.45), B + vec2(cx, spriteH * 0.45), 28.0 + 0.12 * dist, tk, iTimeCursorChange + fk);
 
                 // the "!" when Claude needs you
@@ -750,16 +750,40 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                     col += tcol * exp(-gd / 26.0) * 0.18 * (0.75 + 0.25 * sin(t * 5.0)) * bgMask;
                 }
 
-                // Pikachu: lightning along the hop
-                if (IS_PIKACHU(k) && hop && visible && tk < HOP_T + 0.25) {
+                // Pikachu (yellow) and Sasuke (Chidori blue): lightning tears along the hop
+                if ((sp == SP_PIKACHU || sp == SP_SASUKE) && hop && visible && tk < HOP_T + 0.25) {
+                    bool chidori = sp == SP_SASUKE;
                     vec2 a0 = A + vec2(cx, spriteH * 0.45);
                     vec2 b0 = pos + vec2(0.0, lift + spriteH * 0.45);
                     float fade = 1.0 - smoothstep(HOP_T * 0.6, HOP_T + 0.25, tk);
                     vec2 q = floor(fc / PX) * PX + PX * 0.5;
                     if (fade > 0.0) {
                         float md = boltDist(q, a0, b0, iTimeCursorChange * 13.1 + floor(t * 24.0));
-                        col = mix(col, vec3(1.0, 0.86, 0.25), exp(-md / 9.0) * 0.55 * fade);
-                        col = mix(col, vec3(1.0, 1.0, 0.92), (1.0 - smoothstep(PX * 0.6, PX * 1.4, md)) * fade);
+                        col = mix(col, chidori ? vec3(0.45, 0.7, 1.0) : vec3(1.0, 0.86, 0.25), exp(-md / 9.0) * 0.55 * fade);
+                        col = mix(col, chidori ? vec3(0.9, 0.96, 1.0) : vec3(1.0, 1.0, 0.92), (1.0 - smoothstep(PX * 0.6, PX * 1.4, md)) * fade);
+                        if (chidori) {   // a second, thinner bolt braided around the first
+                            float m2 = boltDist(q, a0, b0, iTimeCursorChange * 7.7 + floor(t * 30.0) + 3.0);
+                            col = mix(col, vec3(0.75, 0.88, 1.0), (1.0 - smoothstep(PX * 0.3, PX, m2)) * fade * 0.8);
+                        }
+                    }
+                }
+                // Zoro: a sword-wind slash traces his jump arc, white edge over green
+                if (sp == SP_ZORO && hop && visible && tk < HOP_T + 0.3) {
+                    float arcH = 28.0 + 0.12 * dist;
+                    float head = clamp(tk / HOP_T, 0.0, 1.0);            // where Zoro is along the arc
+                    float tail = max(head - 0.6, 0.0) + max(tk - HOP_T, 0.0) / 0.3;   // the slash shortens after landing
+                    vec2 q = floor(fc / PX) * PX + PX * 0.5;
+                    float md = 1e9;
+                    vec2 prev = mix(A, B, tail) + vec2(cx, sin(tail * PI) * arcH + spriteH * 0.5);
+                    for (int j = 1; j <= 10; j++) {
+                        float sj = mix(tail, head, float(j) / 10.0);
+                        vec2 cur = mix(A, B, sj) + vec2(cx, sin(sj * PI) * arcH + spriteH * 0.5);
+                        md = min(md, sdSeg(q, prev, cur));
+                        prev = cur;
+                    }
+                    if (head > tail) {
+                        col = mix(col, vec3(0.35, 0.85, 0.45), exp(-md / 7.0) * 0.45);
+                        col = mix(col, vec3(1.0), 1.0 - smoothstep(PX * 0.4, PX * 1.2, md));
                     }
                 }
             }

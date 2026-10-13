@@ -18,7 +18,7 @@ if [[ ! -x $H/tools/.venv/bin/python ]]; then
   python3 -m venv $H/tools/.venv && $H/tools/.venv/bin/pip install -q --disable-pip-version-check pillow \
     || print -u2 "  couldn't install Pillow; everything works except changing the party"
 fi
-[[ -f $H/party.conf ]] || print pikachu > $H/party.conf
+[[ -f $H/party.conf ]] || print order > $H/party.conf
 
 # 2. Departure Mono font (OFL)
 if [[ -z $(print -l ~/Library/Fonts/DepartureMono*(N) /Library/Fonts/DepartureMono*(N)) ]]; then
