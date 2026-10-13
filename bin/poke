@@ -9,6 +9,7 @@
 #   poke reload                rebuild the shader and reload Ghostty
 H=${POKETERM_HOME:-${0:A:h:h}}
 SPECIES=(pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squirtle snorlax mew psyduck mimikyu gastly darkrai)
+SPECIES+=($H/art/extra/*/anims.json(N:h:t))   # local-only extras (art/extra/, not in git)
 
 reload() {
   local py=$H/tools/.venv/bin/python; [[ -x $py ]] || py=python3

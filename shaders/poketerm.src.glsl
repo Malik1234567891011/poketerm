@@ -94,6 +94,8 @@ vec3 typeCol(int sp) {
     if (sp == SP_SNORLAX) return vec3(0.5, 0.8, 0.85);
     if (sp == SP_DITTO) return vec3(0.82, 0.62, 0.95);
     if (sp == SP_DARKRAI) return vec3(0.85, 0.18, 0.3);
+    if (sp == SP_ZORO) return vec3(0.35, 0.85, 0.45);
+    if (sp == SP_SASUKE) return vec3(0.55, 0.75, 1.0);
     return vec3(0.62, 0.38, 0.95);  // the ghosts
 }
 
@@ -350,6 +352,47 @@ vec3 signature(vec3 col, int sp, vec2 fc, vec2 feet, vec2 b, float zt, float see
             float z = (zt - 0.8) / 0.2;
             col = mix(col, vec3(0.6, 0.1, 0.25), (1.0 - smoothstep(0.0, PX * 1.5, abs(r - z * 90.0))) * (1.0 - z));
         }
+    } else if (sp == SP_ZORO) {
+        // Onigiri: three crescent slashes, one per sword, then the cut line he dashes through
+        for (int i = 0; i < 3; i++) {
+            float ts = zt - 0.18 - float(i) * 0.07;
+            if (ts < 0.0 || ts > 0.35) continue;
+            vec2 c = b + vec2(dir * (10.0 + float(i) * 8.0), 4.0 - float(i) * 6.0);
+            vec2 d = q - c;
+            float ang = atan(d.y, d.x * dir);                  // 0 = straight ahead
+            float reach = mix(1.3, -1.3, min(ts / 0.1, 1.0));   // the blade travels top to bottom
+            float on = step(reach, ang) * step(ang, 1.3);
+            float R = 30.0 + float(i) * 6.0;
+            float edge = abs(length(d) - R);
+            float f = 1.0 - ts / 0.35;
+            col = mix(col, vec3(0.55, 1.0, 0.65), exp(-edge / 4.0) * 0.5 * f * on);
+            col = mix(col, vec3(1.0), (1.0 - smoothstep(PX * 0.5, PX * 1.5, edge)) * f * on);
+        }
+        float tl = zt - 0.55;   // the dash: a thin white cut, then it splits
+        if (tl > 0.0 && tl < 0.4) {
+            float y = b.y + 2.0;
+            float x0 = b.x - dir * 90.0, x1 = b.x + dir * 30.0;
+            float inside = step(min(x0, x1), q.x) * step(q.x, max(x0, x1));
+            float w = (tl < 0.12) ? PX * 0.6 : PX * (0.6 + (tl - 0.12) * 8.0);
+            float f = 1.0 - tl / 0.4;
+            col = mix(col, vec3(1.0), (1.0 - smoothstep(w, w + PX, abs(q.y - y))) * inside * f * (tl < 0.12 ? 1.0 : 0.55));
+        }
+    } else if (sp == SP_SASUKE) {
+        // Chidori: lightning crackles in his hand, then bursts as he strikes
+        vec2 hand = b + vec2(dir * 18.0, -4.0);
+        float charge = smoothstep(0.0, 0.3, zt) * (1.0 - smoothstep(0.75, 1.0, zt));
+        float burst = (zt > 0.4 && zt < 0.6) ? 1.0 - (zt - 0.4) / 0.2 : 0.0;
+        float gd = length(q - hand);
+        col += vec3(0.45, 0.7, 1.0) * exp(-gd / (8.0 + 18.0 * burst)) * (0.5 * charge + 0.5 * burst);
+        for (int i = 0; i < 5; i++) {
+            float ang = hash11(floor(iTime * 24.0) + float(i) * 4.1 + seed) * 6.283;
+            float len = (10.0 + 14.0 * hash11(float(i) + floor(iTime * 24.0))) * (1.0 + 2.5 * burst);
+            vec2 tip = hand + vec2(cos(ang), sin(ang)) * len;
+            float md = boltDist(q, hand, tip, floor(iTime * 40.0) + float(i) * 7.7);
+            float a = charge + burst;
+            col = mix(col, vec3(0.5, 0.75, 1.0), exp(-md / 4.0) * 0.6 * min(a, 1.0));
+            col = mix(col, vec3(0.92, 0.97, 1.0), (1.0 - smoothstep(PX * 0.3, PX, md)) * min(a, 1.0));
+        }
     } else if (sp == SP_MIMIKYU) {
         // Shadow Claw: three slashes rake the air in front of it
         for (int i = 0; i < 3; i++) {
@@ -571,8 +614,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         float partyW = 0.0;
         float maxTop = 0.0;
         for (int k = 0; k < PARTY_N; k++) {
-            partyW += float(S_HALFW[k]) * 2.0 * PX + gap;
-            maxTop = max(maxTop, float(S_TOP[k]) * PX);
+            partyW += float(S_HALFW[k]) * 2.0 * S_PX[k] + gap;
+            maxTop = max(maxTop, float(S_TOP[k]) * S_PX[k]);
         }
         vec2 A = vec2(PREV.x + max(PREV.z, 8.0), PREV.y);
         vec2 B = vec2(CUR.x + cellW, CUR.y);
@@ -582,7 +625,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         bool working = PK_STATE >= 1 && PK_STATE <= 4;
         bool needYou = PK_STATE == 5;
         bool done = PK_STATE >= 6;
-        vec2 leadC = B + vec2(gap + float(S_HALFW[0]) * PX, float(S_TOP[0]) * PX * 0.5);
+        vec2 leadC = B + vec2(gap + float(S_HALFW[0]) * S_PX[0], float(S_TOP[0]) * S_PX[0] * 0.5);
         vec2 d = B - A;
         float dist = length(d);
         bool moved = dist > 0.5;
@@ -610,7 +653,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
             float slotX = 0.0;
             for (int k = 0; k < PARTY_N; k++) {
                 float fk = float(k);
-                float hw = float(S_HALFW[k]) * PX;
+                float hw = float(S_HALFW[k]) * S_PX[k];
+                float spx = S_PX[k];   // device px per sprite pixel (fighters are drawn finer)
                 float cx = slotX + hw;
                 slotX += hw * 2.0 + gap;
                 float tk = tc - fk * 0.07;
@@ -666,7 +710,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                 }
                 pos = floor(pos / PX) * PX;
                 lift = floor(lift / PX) * PX;
-                vec2 anchor = pos - vec2(0.0, float(S_GROUND[k]) * PX - lift);
+                vec2 anchor = pos - vec2(0.0, float(S_GROUND[k]) * spx - lift);
 
                 // soft shadow on the ground
                 vec2 sq = (floor((fc - pos) / PX) * PX) / vec2(hw * max(0.75 - lift * 0.004, 0.3), PX * 1.5);
@@ -679,7 +723,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                 else if (working) zt = zc - 0.15;
                 else if (done && jp >= 0.45) zt = (jp - 0.45) * 0.8;
 
-                vec2 p = floor((fc - anchor) / PX);
+                vec2 p = floor((fc - anchor) / spx);
                 if (sp == SP_DITTO && zt > 0.0 && zt < 0.7) {   // jelly wobble
                     float w = 0.35 * exp(-zt * 6.0) * sin(zt * 28.0);
                     float g = float(S_GROUND[k]);
@@ -691,7 +735,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                 if (hurt && a == A_HURT && s.a > 0.0) s.rgb = mix(s.rgb, vec3(1.0, 0.3, 0.3), 0.35 * step(0.5, fract(t * 8.0)));
                 col = mix(col, s.rgb, s.a * alpha);
 
-                float spriteH = float(S_TOP[k]) * PX;
+                float spriteH = float(S_TOP[k]) * spx;
                 // ghosts leave a ring of shadow where they vanish / appear
                 if (S_GHOST[k] && hop && tk < HOP_T + 0.3) {
                     for (int e = 0; e < 2; e++) {
@@ -787,10 +831,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         float gap = PX * 3.0;
         vec2 B = (iCursorVisible != 0) ? vec2(CUR.x + max(CUR.z, 8.0), CUR.y) : vec2(iResolution.x - 18.0, 4.0);
         float partyW = 0.0;
-        for (int k = 0; k < PARTY_N; k++) partyW += float(S_HALFW[k]) * 2.0 * PX + gap;
+        for (int k = 0; k < PARTY_N; k++) partyW += float(S_HALFW[k]) * 2.0 * S_PX[k] + gap;
         if (iCursorVisible == 0) B.x -= partyW;
         B.x = min(B.x + gap, iResolution.x - partyW - 4.0);
-        vec2 c = B + vec2(partyW * 0.5, float(S_TOP[0]) * PX * 0.5);
+        vec2 c = B + vec2(partyW * 0.5, float(S_TOP[0]) * S_PX[0] * 0.5);
         vec3 tc = typeCol(S_SPECIES[0]);
         float w = max(partyW * 0.35, 24.0);
         float dx = abs(pcentre(fc).x - c.x);

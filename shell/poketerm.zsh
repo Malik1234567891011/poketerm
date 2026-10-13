@@ -28,13 +28,16 @@ _poke_type() {  # typewriter print: _poke_type <text> [delay]
 
 # A PMD-style encounter: portrait on the left, a text box typed out beside it.
 poke_encounter() {
-  local -a files=($POKETERM_HOME/shell/sprites/*.normal.ans(N))
+  # Pokémon portraits, plus any local extras (art/extra/<name>/, not in git)
+  local -a files=($POKETERM_HOME/shell/sprites/*.normal.ans(N) $POKETERM_HOME/art/extra/*/*.normal.ans(N))
   (( ${#files} )) || return 0
   local name=${1:-${${files[RANDOM % ${#files} + 1]:t}%%.*}}
+  local dir=$POKETERM_HOME/shell/sprites
+  [[ -r $dir/$name.normal.ans ]] || dir=$POKETERM_HOME/art/extra/${(L)name}
   local shiny=${2:-$(( RANDOM % 64 == 0 ))}
   local mood=normal
-  (( RANDOM % 4 == 0 )) && [[ -r $POKETERM_HOME/shell/sprites/$name.happy.ans ]] && mood=happy
-  local file=$POKETERM_HOME/shell/sprites/$name.$mood.ans
+  (( RANDOM % 4 == 0 )) && [[ -r $dir/$name.happy.ans ]] && mood=happy
+  local file=$dir/$name.$mood.ans
   [[ -r $file ]] || return 0
   local -a art=("${(@f)$(<$file)}")
   local conf=$(<$POKETERM_HOME/party.conf 2>/dev/null)
@@ -134,7 +137,7 @@ _poke_area=$(git rev-parse --show-toplevel 2>/dev/null)
 # signal Ghostty to reload (SIGUSR2). `poke party X` pins one instead.
 _poke_roll_partner() {
   [[ $(<$POKETERM_HOME/party.conf 2>/dev/null) == (|random) ]] || return 0
-  local -a roster=(${${${(f)"$(print -l $POKETERM_HOME/art/pmd/*(/N))"}:t}})
+  local -a roster=($POKETERM_HOME/art/pmd/*(/N:t) $POKETERM_HOME/art/extra/*/anims.json(N:h:t))
   (( ${#roster} )) || return 0
   local pick=${roster[RANDOM % ${#roster} + 1]}
   print -r -- $pick > $POKETERM_HOME/.partner

@@ -8,6 +8,7 @@ import pathlib
 
 from PIL import Image
 
+import extra
 import pmd
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -25,7 +26,8 @@ def party_names():
         names = (ROOT / ".try").read_text().split()
     if os.environ.get("POKETERM_PARTY"):  # preview a party without touching party.conf
         names = os.environ["POKETERM_PARTY"].split()
-    names = [n.lower() for n in names if n.lower() in pmd.ROSTER][:3]
+    known = set(pmd.ROSTER) | set(extra.names())
+    names = [n.lower() for n in names if n.lower() in known][:3]
     return names or ["pikachu"]
 
 
@@ -35,7 +37,7 @@ def glsl_party(names):
     an_start, an_n, an_len = [], [], []
     ground, half_w, top, ghost = [], [], [], []
     for name in names:
-        anims = pmd.load(name)
+        anims = extra.load(name, pmd.ANIMS) if name in extra.names() else pmd.load(name)
         colors, index = pmd.palette(anims)
         pal += [(0, 0, 0)] + colors + [(0, 0, 0)] * (15 - len(colors))
         lo_y, max_x, max_y = 10 ** 6, 0, 0
@@ -86,6 +88,7 @@ def glsl_party(names):
         f"#define PARTY_HAS_SNORLAX {'true' if 'snorlax' in names else 'false'}",
         f"#define PARTY_ELECTRIC {'true' if {'pikachu', 'voltorb'} & set(names) else 'false'}",
         "\n".join(f"#define SP_{n.upper()} {i}" for i, n in enumerate(pmd.ROSTER)),
+        "\n".join(f"#define SP_{n.upper()} {i}" for n, i in extra.IDS.items()),
         "#define A_WALK 0\n#define A_IDLE 1\n#define A_SLEEP 2\n#define A_HOP 3\n#define A_HURT 4\n#define A_SPECIAL 5",
         "#define IS_PIKACHU(k) (" + (" || ".join(f"(k) == {i}" for i in pika) or "false") + ")",
         "#define IS_JIGGLY(k) (" + (" || ".join(f"(k) == {i}" for i, n in enumerate(names) if n == "jigglypuff") or "false") + ")",
@@ -99,7 +102,8 @@ def glsl_party(names):
         arr("int", "S_HALFW", pad(half_w, half_w[0])),
         arr("int", "S_TOP", pad(top, top[0])),
         arr("bool", "S_GHOST", pad(ghost, False), lambda v: "true" if v else "false"),
-        arr("int", "S_SPECIES", pad([list(pmd.ROSTER).index(n) for n in names], -1)),
+        arr("int", "S_SPECIES", pad([extra.IDS.get(n, 99) if n in extra.names() else list(pmd.ROSTER).index(n) for n in names], -1)),
+        arr("float", "S_PX", pad([extra.SCALE if n in extra.names() else 3.0 for n in names], 3.0), lambda v: f"{v:.1f}"),
         arr("vec3", "PAL", pal, lambda c: f"vec3({c[0] / 255:.3f}, {c[1] / 255:.3f}, {c[2] / 255:.3f})"),
     ]
     print(f"party {names}: {len(words)} sprite words, {len(fr_off)} frames")
@@ -139,6 +143,10 @@ def ansi_portraits():
             p = pmd.PMD / name / f"portrait-{mood}.png"
             if p.exists():
                 (out / f"{name.upper()}.{mood.lower()}.ans").write_text("\n".join(ansi_rows(Image.open(p))) + "\n")
+    for name in extra.names():   # fighters have no portraits: show their full idle sprite, 1:1
+        img = extra.portrait(name)
+        for mood in ("normal", "happy"):
+            (extra.EXTRA / name / f"{name.upper()}.{mood}.ans").write_text("\n".join(ansi_rows(img)) + "\n")
 
 
 def main():
