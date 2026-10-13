@@ -103,7 +103,7 @@ def glsl_party(names):
         arr("int", "S_TOP", pad(top, top[0])),
         arr("bool", "S_GHOST", pad(ghost, False), lambda v: "true" if v else "false"),
         arr("int", "S_SPECIES", pad([extra.IDS.get(n, 99) if n in extra.names() else list(pmd.ROSTER).index(n) for n in names], -1)),
-        arr("float", "S_PX", pad([extra.SCALE if n in extra.names() else 3.0 for n in names], 3.0), lambda v: f"{v:.1f}"),
+        arr("float", "S_PX", pad([extra.scale(n) if n in extra.names() else 3.0 for n in names], 3.0), lambda v: f"{v:.1f}"),
         arr("vec3", "PAL", pal, lambda c: f"vec3({c[0] / 255:.3f}, {c[1] / 255:.3f}, {c[2] / 255:.3f})"),
     ]
     print(f"party {names}: {len(words)} sprite words, {len(fr_off)} frames")

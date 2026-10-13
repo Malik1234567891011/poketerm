@@ -163,6 +163,9 @@ def timeline(name):
         for code in range(6, 14):
             at(0.2, lambda T, c=code: setattr(T, "claude", c))
         at(0.2, lambda T: setattr(T, "claude", 0))
+    if name == "stand":
+        # the party standing still a few lines down, for comparing sizes
+        at(0.1, lambda T: T.write("\n" * 7 + "~/poketerm ❯ "))
     if name == "hops":
         # a few quick commands so the party hops line to line, then one fails
         for cmd in ("ls", "pwd", "whoami"):

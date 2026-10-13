@@ -373,9 +373,11 @@ vec3 signature(vec3 col, int sp, vec2 fc, vec2 feet, vec2 b, float zt, float see
             float y = b.y + 2.0;
             float x0 = b.x - dir * 90.0, x1 = b.x + dir * 30.0;
             float inside = step(min(x0, x1), q.x) * step(q.x, max(x0, x1));
-            float w = (tl < 0.12) ? PX * 0.6 : PX * (0.6 + (tl - 0.12) * 8.0);
+            // one line, then it splits into two that drift apart, like the air was cut
+            float spread = max(tl - 0.12, 0.0) * 40.0;
+            float d = min(abs(q.y - y - spread), abs(q.y - y + spread));
             float f = 1.0 - tl / 0.4;
-            col = mix(col, vec3(1.0), (1.0 - smoothstep(w, w + PX, abs(q.y - y))) * inside * f * (tl < 0.12 ? 1.0 : 0.55));
+            col = mix(col, vec3(1.0), (1.0 - smoothstep(PX * 0.5, PX * 1.2, d)) * inside * f);
         }
     } else if (sp == SP_SASUKE) {
         // Chidori: lightning crackles in his hand, then bursts as he strikes

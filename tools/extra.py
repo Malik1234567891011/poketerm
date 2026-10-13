@@ -22,7 +22,15 @@ from PIL import Image, ImageDraw
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 EXTRA = ROOT / "art" / "extra"
-SCALE = 2.0   # device px per sprite pixel: fighter sprites are taller than PMD ones
+SCALE = 3.0   # device px per sprite pixel, same grid as the Pokémon; anims.json "scale" overrides it
+
+
+def scale(name):
+    import os
+    if os.environ.get("POKETERM_EXTRA_SCALE"):   # for trying sizes in previews
+        return float(os.environ["POKETERM_EXTRA_SCALE"])
+    meta = json.loads((EXTRA / name / "anims.json").read_text())
+    return float(meta.get("scale", SCALE))
 # shader ids for characters with their own effects (defined even when the art is absent)
 IDS = {"zoro": 100, "sasuke": 101, "shanks": 102, "gojo": 103}
 
