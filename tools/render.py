@@ -186,7 +186,8 @@ class Renderer:
         self.W = PAD_X * 2 + cols * self.cw
         self.H = PAD_TOP + PAD_BOT + rows * self.ch
         self.ctx = moderngl.create_standalone_context(require=410)
-        src = (ROOT / "shaders" / "poketerm.glsl").read_text()
+        # a POKETERM_PARTY preview is built into preview/, away from the live shader
+        src = (ROOT / ("preview" if os.environ.get("POKETERM_PARTY") else "shaders") / "poketerm.glsl").read_text()
         self.prog = self.ctx.program(
             vertex_shader="#version 410 core\nin vec2 p; void main(){ gl_Position = vec4(p,0,1); }",
             fragment_shader=PRELUDE + src)

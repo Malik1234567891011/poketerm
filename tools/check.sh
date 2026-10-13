@@ -3,7 +3,8 @@
 cd "${0:A:h}/.."
 python3 tools/build.py || exit 1
 ok=0
-for f in shaders/*.glsl(N); do
+dir=shaders; [[ -n $POKETERM_PARTY ]] && dir=preview   # where build.py put it
+for f in $dir/*.glsl(N); do
   [[ $f == *.src.glsl ]] && continue
   tmp=$(mktemp -t pk).frag
   cat tools/ghostty_prelude.glsl "$f" > $tmp

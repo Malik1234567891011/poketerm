@@ -146,6 +146,9 @@ def main():
     party = glsl_party(party_names())
     for src in (ROOT / "shaders").glob("*.src.glsl"):
         out = src.with_name(src.name.replace(".src.glsl", ".glsl"))
+        if os.environ.get("POKETERM_PARTY"):  # previews never touch the shader Ghostty loads
+            out = ROOT / "preview" / out.name
+            out.parent.mkdir(exist_ok=True)
         out.write_text(src.read_text().replace("//@PARTY", party).replace("//@SPRITES", ""))
         print("built", out.relative_to(ROOT))
 
