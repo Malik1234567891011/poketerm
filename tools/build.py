@@ -21,6 +21,8 @@ def party_names():
     if names == ["random"]:
         cur = ROOT / ".partner"
         names = cur.read_text().split() if cur.exists() else ["pikachu"]
+    if (ROOT / ".try").exists():  # `poke try NAME`: one species, for the next tab only
+        names = (ROOT / ".try").read_text().split()
     if os.environ.get("POKETERM_PARTY"):  # preview a party without touching party.conf
         names = os.environ["POKETERM_PARTY"].split()
     names = [n.lower() for n in names if n.lower() in pmd.ROSTER][:3]

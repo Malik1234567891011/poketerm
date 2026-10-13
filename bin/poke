@@ -2,6 +2,7 @@
 # poke — control poketerm
 #   poke                       show your party and options
 #   poke party pikachu gengar  pin up to 3 followers (run `poke` to list them)
+#   poke try [NAME]            show one in a new tab (no NAME: the next one, for a tour)
 #   poke random                a random partner every new window (the default)
 #   poke wild [NAME] [shiny]   summon a wild encounter
 #   poke off | on              turn the shader effects off / back on
@@ -27,6 +28,23 @@ case $1 in
     print -- "$pick" > $H/party.conf
     reload && print "party: $pick"
     ;;
+  try)
+    # Ghostty only compiles the shader when a tab opens, so bake this one and open a tab.
+    # The new tab's shell sees .try, greets you with it, then puts your party back.
+    local name=${(L)2}
+    if [[ -z $name ]]; then
+      local last=$(<$H/.try-last 2>/dev/null)
+      name=${SPECIES[(( (${SPECIES[(Ie)$last]} % ${#SPECIES}) + 1 ))]}
+    fi
+    (( ${SPECIES[(Ie)$name]} )) || { print -u2 "unknown pokémon: $name (try: $SPECIES)"; exit 1; }
+    print -- $name > $H/.try
+    print -- $name > $H/.try-last
+    reload >/dev/null || exit 1
+    osascript -e 'tell application "Ghostty" to new tab in front window' >/dev/null 2>&1 \
+      || osascript -e 'tell application "Ghostty" to new window' >/dev/null 2>&1 \
+      || { print "$name is ready: open a new tab (⌘T) to see it"; exit 0; }
+    print "$name sent to a new tab  ·  \`poke try\` again for the next one"
+    ;;
   random)
     print random > $H/party.conf
     print "a random partner joins you in every new Ghostty window"
@@ -47,6 +65,6 @@ case $1 in
     if [[ $conf == (|random) ]]; then print "party: random each window (now: $(<$H/.partner 2>/dev/null))"
     else print "party: $conf (pinned — \`poke random\` to roll each window)"; fi
     print "pokémon: $SPECIES"
-    sed -n '2,7p' $0 | sed 's/^# \{0,1\}//'
+    sed -n '2,8p' $0 | sed 's/^# \{0,1\}//'
     ;;
 esac

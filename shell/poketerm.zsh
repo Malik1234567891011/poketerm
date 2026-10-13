@@ -145,6 +145,15 @@ _poke_roll_partner() {
 
 if [[ $TERM_PROGRAM == ghostty && -z $_POKETERM_GREETED ]]; then
   export _POKETERM_GREETED=1
-  _poke_roll_partner
-  [[ ${POKETERM_GREET:-1} == 1 ]] && poke_encounter
+  if [[ -r $POKETERM_HOME/.try ]]; then
+    # opened by `poke try NAME`: meet it, then rebake the shader with your real party
+    local _try=$(<$POKETERM_HOME/.try)
+    rm -f $POKETERM_HOME/.try
+    poke_encounter ${(U)_try}
+    local _py=$POKETERM_HOME/tools/.venv/bin/python; [[ -x $_py ]] || _py=python3
+    ( $_py $POKETERM_HOME/tools/build.py --shader-only >/dev/null 2>&1 ) &!
+  else
+    _poke_roll_partner
+    [[ ${POKETERM_GREET:-1} == 1 ]] && poke_encounter
+  fi
 fi
