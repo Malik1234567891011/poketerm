@@ -96,6 +96,7 @@ poke                         show party + roster
 poke random                  a random partner every new window (default)
 poke party pikachu           pin one partner
 poke party eevee gengar mew  pin up to three followers
+poke try [NAME]              show one in a new tab; plain `poke try` tours them in order
 poke wild [NAME] [shiny]     summon an encounter
 poke off / poke on           disable / enable the shader
 poke reload                  rebuild the shader (new tabs/windows pick it up)
