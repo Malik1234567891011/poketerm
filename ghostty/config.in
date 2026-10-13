@@ -1,12 +1,12 @@
-# poketerm — Ghostty config (symlinked to ~/.config/ghostty/config)
-theme = /Users/malik/poketerm/ghostty/themes/poketerm
+# poketerm — Ghostty config template. install.sh writes ghostty/config from this.
+theme = @POKETERM@/ghostty/themes/poketerm
 
 font-family = Departure Mono
 font-size = 14
 adjust-cell-height = 12%
 
 # the living world: Pikachu follower, magic ink, sky, grass, battle intro
-custom-shader = /Users/malik/poketerm/shaders/poketerm.glsl
+custom-shader = @POKETERM@/shaders/poketerm.glsl
 custom-shader-animation = true
 
 # block cursor everywhere so the shader always knows the cell width
@@ -27,7 +27,7 @@ confirm-close-surface = false
 
 # poké ball app icon (dock / app switcher) and a chiptune bell
 macos-icon = custom
-macos-custom-icon = /Users/malik/poketerm/art/icon.png
+macos-custom-icon = @POKETERM@/art/icon.png
 bell-features = audio,attention,no-system
-bell-audio-path = /Users/malik/poketerm/sounds/bell.wav
+bell-audio-path = @POKETERM@/sounds/bell.wav
 bell-audio-volume = 0.4

@@ -51,7 +51,7 @@ def branch(cwd):
 
 def party_size():
     try:
-        with open(os.path.expanduser("~/poketerm/party.conf")) as f:
+        with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "party.conf")) as f:
             return max(1, min(3, len(f.read().split())))
     except OSError:
         return 1

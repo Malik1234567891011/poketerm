@@ -3,3 +3,5 @@ tools/bin/
 preview/
 *.spv
 __pycache__/
+ghostty/config
+party.conf

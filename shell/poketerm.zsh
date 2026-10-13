@@ -6,7 +6,7 @@
 #  * a location sign when you walk into a different repo
 #  * `poke` command to change your party, toggle effects, summon encounters
 
-POKETERM_HOME=${POKETERM_HOME:-$HOME/poketerm}
+POKETERM_HOME=${POKETERM_HOME:-${${(%):-%x}:A:h:h}}
 [[ -o interactive ]] && path=($POKETERM_HOME/bin $path)
 
 # exact 24-bit colours the shader turns into materials (keep in sync with the shader)

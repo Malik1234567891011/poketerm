@@ -19,7 +19,7 @@ pid, fd = pty.fork()
 if pid == 0:
     import fcntl, struct, termios
     fcntl.ioctl(0, termios.TIOCSWINSZ, struct.pack("HHHH", rows, cols, 0, 0))
-    os.chdir(os.path.expanduser("~/poketerm"))
+    os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     os.execvpe("claude", ["claude"], env)
 
 import fcntl, struct, termios

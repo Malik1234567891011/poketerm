@@ -1,6 +1,28 @@
 # poketerm
 
-A living Pokémon world inside Ghostty + Claude Code. Built for Malik's Mac.
+A living Pokémon world inside [Ghostty](https://ghostty.org) + [Claude Code](https://claude.com/claude-code).
+Pikachu follows your cursor, text in certain colours crackles with electricity, and Claude's status line is a battle HUD.
+
+![poketerm demo](art/demo.gif)
+
+## Install
+
+Needs macOS, [Ghostty](https://ghostty.org), zsh (the macOS default) and python3.
+
+```sh
+git clone https://github.com/Malik1234567891011/poketerm ~/poketerm
+~/poketerm/install.sh            # or: install.sh --no-claude
+```
+
+Then open a new Ghostty window. The installer is safe to re-run, and it only *adds* to your setup:
+
+- an include line at the end of your Ghostty config (your own settings stay put; poketerm's win where they overlap)
+- one `source` line at the end of `~/.zshrc`
+- the Departure Mono font, if you don't have it
+- in `~/.claude/settings.json`: the `custom:poketerm` theme, status line, spinner verbs and two sound hooks,
+  next to any hooks you already have (a backup goes to `~/.claude/settings.json.before-poketerm`)
+
+Uninstall with `~/poketerm/uninstall.sh`. It removes exactly those pieces.
 
 ## What it does
 
@@ -58,14 +80,10 @@ tools/build.py             bakes the party into the shader + portraits into shel
 tools/render.py            offline renderer: runs the real shader on a simulated terminal
 tools/check.sh             builds + validates the shader against Ghostty's GLSL prelude
 tools/sounds.py            synthesises the jingles
+tools/claude_setup.py      adds/removes the Claude Code settings
 tools/icon.py              draws the app icon
 art/pmd/<name>/            PMD SpriteCollab sheets + portraits
 ```
-
-Installed pieces: `~/.config/ghostty/config` -> `ghostty/config`, a source line at the end of
-`~/.zshrc`, `~/.claude/themes/poketerm.json` -> `claude/poketerm-theme.json`, and
-`theme` / `statusLine` / `spinnerVerbs` / `hooks` in `~/.claude/settings.json`
-(the original is backed up at `~/.claude/settings.json.before-poketerm`).
 
 ## Notes for whoever edits this next
 
@@ -80,5 +98,6 @@ Installed pieces: `~/.config/ghostty/config` -> `ghostty/config`, a source line 
 
 Pokémon sprites and portraits are from [PMD SpriteCollab](https://github.com/PMDCollab/SpriteCollab)
 (CC BY-NC 4.0); per-sprite artists are in `art/pmd/*/credits.txt`. Pokémon © Nintendo / Game Freak / Creatures.
-Personal, non-commercial use. Everything else (shader, effects, inks, intro, HUD, sounds, icon) is original.
+Everything else (shader, effects, inks, intro, HUD, sounds, icon) is original.
+This is an unofficial, non-commercial fan project, not affiliated with Nintendo, Game Freak, Creatures or The Pokémon Company.
 Font: [Departure Mono](https://departuremono.com) (OFL).

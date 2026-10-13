@@ -5,11 +5,12 @@
 #   poke wild [NAME] [shiny]   summon a wild encounter
 #   poke off | on              turn the shader effects off / back on
 #   poke reload                rebuild the shader and reload Ghostty
-H=${POKETERM_HOME:-$HOME/poketerm}
+H=${POKETERM_HOME:-${0:A:h:h}}
 SPECIES=(pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squirtle snorlax mew psyduck mimikyu gastly)
 
 reload() {
-  python3 $H/tools/build.py >/dev/null || { print -u2 "build failed"; return 1; }
+  local py=$H/tools/.venv/bin/python; [[ -x $py ]] || py=python3
+  $py $H/tools/build.py >/dev/null || { print -u2 "build failed"; return 1; }
   osascript -e 'tell application "Ghostty" to perform action "reload_config" on focused terminal of selected tab of front window' >/dev/null 2>&1 \
     || print "rebuilt — press ⌘⇧, in Ghostty to reload"
 }
