@@ -62,7 +62,7 @@ fi
 
 # 6. bake the shader for the current party
 step "building the shader"
-$H/bin/poke reload >/dev/null 2>&1 || true
+$H/bin/poke reload >/dev/null 2>&1 || print -u2 "  shader build failed (needs Pillow: $H/tools/.venv/bin/pip install pillow, then poke reload)"
 
 print -P "\n%F{yellow}poketerm installed.%f Open a new Ghostty window (or press ⌘⇧, to reload)."
 print "Try: poke party eevee gengar mew  ·  poke wild mew shiny  ·  poke off"
