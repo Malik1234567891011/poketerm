@@ -1,0 +1,23 @@
+# poketerm — night on Route 1. Built by hand, not downloaded.
+background = #11131c
+foreground = #e8e3d3
+cursor-color = #ffd23f
+cursor-text = #11131c
+selection-background = #343a63
+selection-foreground = #fbf7ee
+palette = 0=#1d2030
+palette = 1=#ee4a3f
+palette = 2=#7ccb55
+palette = 3=#f8d030
+palette = 4=#6f95f0
+palette = 5=#f6699a
+palette = 6=#8fd6d6
+palette = 7=#d9d2c2
+palette = 8=#5a6080
+palette = 9=#ff7466
+palette = 10=#a9df8e
+palette = 11=#fbe17d
+palette = 12=#a2bbf6
+palette = 13=#fb98b8
+palette = 14=#bfe8e8
+palette = 15=#fbf7ee

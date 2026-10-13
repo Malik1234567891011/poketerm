@@ -1,0 +1,45 @@
+#!/bin/zsh
+# poke — control poketerm
+#   poke                       show your party and options
+#   poke party pikachu gengar  choose up to 3 followers (run `poke` to list them)
+#   poke wild [NAME] [shiny]   summon a wild encounter
+#   poke off | on              turn the shader effects off / back on
+#   poke reload                rebuild the shader and reload Ghostty
+H=${POKETERM_HOME:-$HOME/poketerm}
+SPECIES=(pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squirtle snorlax mew psyduck mimikyu gastly)
+
+reload() {
+  python3 $H/tools/build.py >/dev/null || { print -u2 "build failed"; return 1; }
+  osascript -e 'tell application "Ghostty" to perform action "reload_config" on focused terminal of selected tab of front window' >/dev/null 2>&1 \
+    || print "rebuilt — press ⌘⇧, in Ghostty to reload"
+}
+
+case $1 in
+  party)
+    shift
+    local -a pick=()
+    for n in ${(L)@}; do
+      (( ${SPECIES[(Ie)$n]} )) || { print -u2 "unknown pokémon: $n (try: $SPECIES)"; exit 1; }
+      pick+=$n
+    done
+    (( ${#pick} >= 1 && ${#pick} <= 3 )) || { print -u2 "pick 1 to 3 of: $SPECIES"; exit 1; }
+    print -- "$pick" > $H/party.conf
+    reload && print "party: $pick"
+    ;;
+  wild)
+    POKETERM_HOME=$H source $H/shell/poketerm.zsh
+    poke_encounter ${(U)2} $([[ $3 == shiny ]] && print 1)
+    ;;
+  off)
+    sed -i '' 's|^custom-shader = |# custom-shader = |' $H/ghostty/config && reload && print "effects off"
+    ;;
+  on)
+    sed -i '' 's|^# custom-shader = |custom-shader = |' $H/ghostty/config && reload && print "effects on"
+    ;;
+  reload) reload ;;
+  *)
+    print "party: $(<$H/party.conf)"
+    print "pokémon: $SPECIES"
+    sed -n '2,7p' $0 | sed 's/^# \{0,1\}//'
+    ;;
+esac

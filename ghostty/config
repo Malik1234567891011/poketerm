@@ -1,0 +1,33 @@
+# poketerm — Ghostty config (symlinked to ~/.config/ghostty/config)
+theme = /Users/malik/poketerm/ghostty/themes/poketerm
+
+font-family = Departure Mono
+font-size = 14
+adjust-cell-height = 12%
+
+# the living world: Pikachu follower, magic ink, sky, grass, battle intro
+custom-shader = /Users/malik/poketerm/shaders/poketerm.glsl
+custom-shader-animation = true
+
+# block cursor everywhere so the shader always knows the cell width
+cursor-style = block
+cursor-style-blink = false
+shell-integration-features = no-cursor
+
+# room at the bottom for the tall grass
+window-padding-x = 16
+window-padding-y = 12,28
+window-padding-color = background
+
+macos-titlebar-style = transparent
+window-colorspace = srgb
+window-save-state = always
+mouse-hide-while-typing = true
+confirm-close-surface = false
+
+# poké ball app icon (dock / app switcher) and a chiptune bell
+macos-icon = custom
+macos-custom-icon = /Users/malik/poketerm/art/icon.png
+bell-features = audio,attention,no-system
+bell-audio-path = /Users/malik/poketerm/sounds/bell.wav
+bell-audio-volume = 0.4

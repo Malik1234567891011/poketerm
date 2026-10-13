@@ -1,0 +1,31 @@
+{
+  "name": "Poketerm",
+  "base": "dark",
+  "overrides": {
+    "claude": "#ffd105",
+    "claudeShimmer": "#fff4b0",
+    "promptBorder": "#f0b7fd",
+    "promptBorderShimmer": "#f0b7fd",
+    "permission": "#ff6a13",
+    "permissionShimmer": "#ffb27a",
+    "planMode": "#9c7cf3",
+    "bashBorder": "#ff6a13",
+    "success": "#7ccb55",
+    "error": "#ee4a3f",
+    "warning": "#f8d030",
+    "warningShimmer": "#fbe17d",
+    "suggestion": "#8fd6d6",
+    "inactive": "#6b7194",
+    "subtle": "#3a3f5c",
+    "remember": "#f6699a",
+    "userMessageBackground": "#1b1f33",
+    "bashMessageBackgroundColor": "#24192a",
+    "diffAdded": "#1c3a26",
+    "diffRemoved": "#45202a",
+    "diffAddedWord": "#2f6b40",
+    "diffRemovedWord": "#7a2f3b",
+    "rate_limit_fill": "#58d068",
+    "rate_limit_empty": "#2a2e45",
+    "briefLabelClaude": "#ffd105"
+  }
+}

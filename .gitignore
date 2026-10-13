@@ -1,0 +1,5 @@
+tools/.venv/
+tools/bin/
+preview/
+*.spv
+__pycache__/
