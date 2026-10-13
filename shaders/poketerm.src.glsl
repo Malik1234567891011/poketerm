@@ -95,6 +95,12 @@ vec3 typeCol(int sp) {
     if (sp == SP_DARKRAI) return vec3(0.85, 0.18, 0.3);
     if (sp == SP_ZORO) return vec3(0.35, 0.85, 0.45);
     if (sp == SP_SASUKE) return vec3(0.55, 0.75, 1.0);
+    if (sp == SP_GOKU) return vec3(0.78, 0.85, 1.0);
+    if (sp == SP_LUFFY) return vec3(1.0, 0.35, 0.3);
+    if (sp == SP_NARUTO) return vec3(1.0, 0.6, 0.15);
+    if (sp == SP_KILLUA) return vec3(0.55, 0.8, 1.0);
+    if (sp == SP_ICHIGO) return vec3(0.85, 0.15, 0.2);
+    if (sp == SP_KAKASHI) return vec3(0.75, 0.85, 1.0);
     return vec3(0.62, 0.38, 0.95);  // the ghosts
 }
 
@@ -345,6 +351,109 @@ vec3 signature(vec3 col, int sp, vec2 fc, vec2 feet, vec2 b, float zt, float see
             float z = (zt - 0.8) / 0.2;
             col = mix(col, vec3(0.6, 0.1, 0.25), (1.0 - smoothstep(0.0, PX * 1.5, abs(r - z * 90.0))) * (1.0 - z));
         }
+    } else if (sp == SP_GOKU) {
+        // Kamehameha: a ball of ki gathers at his hip, then a beam blasts out of his hands
+        vec2 hip = b + vec2(-dir * 6.0, -6.0);
+        vec2 hand = b + vec2(dir * 26.0, 0.0);
+        if (zt < 0.48) {
+            float R = 3.0 + 9.0 * smoothstep(0.0, 0.45, zt);
+            float d = length(q - hip);
+            col += vec3(0.3, 0.6, 1.0) * exp(-d / (R * 1.6)) * 0.9;
+            col = mix(col, vec3(0.85, 0.95, 1.0), step(d, R * 0.6));
+            float ring = 1.0 - smoothstep(0.0, PX, abs(d - R * 1.4 - sin(iTime * 40.0) * 2.0));
+            col = mix(col, vec3(0.6, 0.85, 1.0), ring * step(0.5, hash21(floor(fc / PX) + floor(iTime * 20.0))));
+        } else {
+            float L = min((zt - 0.48) * 1500.0, 320.0);
+            float fade = 1.0 - smoothstep(0.85, 1.0, zt);
+            float along = (q.x - hand.x) * dir;
+            float cw = 7.0 + 2.0 * sin(iTime * 50.0 + along * 0.15) + min(max(along, 0.0) * 0.02, 5.0);   // core half-width
+            float across = abs(q.y - hand.y);
+            if (along > -4.0 && along < L) {
+                col = mix(col, vec3(0.25, 0.55, 1.0), exp(-max(across - cw, 0.0) / 9.0) * 0.95 * fade);
+                col = mix(col, vec3(0.55, 0.85, 1.0), step(across, cw * 1.35) * fade);
+                float band = step(0.5, fract(along / 26.0 - iTime * 9.0));   // energy streaming outward
+                col = mix(col, vec3(0.95, 0.99, 1.0), step(across, cw * (0.55 + 0.25 * band)) * fade);
+            }
+            float dh = length(q - (hand + vec2(dir * L, 0.0)));
+            col += vec3(0.3, 0.6, 1.0) * exp(-dh / 16.0) * 0.8 * fade;
+            col = mix(col, vec3(0.55, 0.85, 1.0), step(dh, cw * 2.4) * fade);
+            col = mix(col, vec3(0.95, 0.99, 1.0), step(dh, cw * 1.5) * fade);
+        }
+    } else if (sp == SP_LUFFY) {
+        // Gear Second: steam pours off him, then the Gatling's fists land in a flurry of impacts
+        for (int i = 0; i < 6; i++) {
+            float h = hash11(float(i) * 3.7 + seed);
+            float ph = fract(zt * 1.8 + h);
+            vec2 sp2 = b + vec2(-dir * 14.0 + (h - 0.5) * 22.0, 6.0 + ph * 50.0);
+            col = mix(col, vec3(1.0, 0.93, 0.95), step(length(q - sp2), 4.0 + ph * 9.0) * (1.0 - ph * ph) * 0.8);
+        }
+        if (zt > 0.25 && zt < 0.95) for (int i = 0; i < 4; i++) {
+            float k = floor(iTime * 14.0 + float(i) * 0.25);
+            float lt = fract(iTime * 14.0 + float(i) * 0.25);
+            vec2 c = b + vec2(dir * (34.0 + hash11(k + float(i)) * 55.0), (hash11(k * 1.3 + float(i)) - 0.5) * 34.0);
+            vec2 d = q - c;
+            float star = (12.0 + 14.0 * (1.0 - lt)) * (0.3 + 0.7 * pow(abs(cos(2.0 * atan(d.y, d.x))), 8.0));
+            col = mix(col, (length(d) < star * 0.4) ? vec3(1.0) : vec3(1.0, 0.85, 0.35), step(length(d), star) * (1.0 - lt));
+        }
+    } else if (sp == SP_NARUTO) {
+        // Rasengan: a spinning blue sphere in his palm that bursts on impact (the clones are in mainImage)
+        vec2 c = b + vec2(dir * 20.0, -1.0);
+        vec2 d = q - c;
+        float r = length(d);
+        if (zt > 0.25 && zt < 0.8) {
+            float R = 7.0 + 7.0 * smoothstep(0.25, 0.6, zt);
+            float sw = sin(atan(d.y, d.x) * 3.0 - r * 0.6 + iTime * 30.0);
+            col += vec3(0.35, 0.7, 1.0) * exp(-r / (R * 1.5)) * 0.8;
+            if (r < R) col = mix(vec3(0.45, 0.8, 1.0), vec3(0.95, 1.0, 1.0), 0.5 + 0.5 * sw);
+            float dash = step(0.5, fract(atan(d.y, d.x) / 6.283 * 6.0 + iTime * 4.0));
+            col = mix(col, vec3(0.8, 0.95, 1.0), (1.0 - smoothstep(0.0, PX, abs(r - R * 1.6))) * dash);
+        }
+        if (zt > 0.62) {
+            float z = (zt - 0.62) / 0.38;
+            for (int i = 0; i < 2; i++) {
+                float ring = 1.0 - smoothstep(0.0, PX * 1.4, abs(r - (14.0 + z * (70.0 + float(i) * 40.0))));
+                col = mix(col, vec3(0.75, 0.92, 1.0), ring * (1.0 - z));
+            }
+        }
+    } else if (sp == SP_KILLUA) {
+        // Godspeed: lightning crawls over him, then his claw rakes the air in three lines
+        for (int i = 0; i < 6; i++) {
+            float k = floor(iTime * 20.0) + float(i) * 5.3 + seed;
+            vec2 a0 = b + (vec2(hash11(k), hash11(k + 1.7)) - 0.5) * vec2(30.0, 50.0);
+            vec2 a1 = a0 + (vec2(hash11(k + 3.1), hash11(k + 4.4)) - 0.5) * 40.0;
+            float md = boltDist(q, a0, a1, k);
+            col = mix(col, vec3(0.45, 0.78, 1.0), exp(-md / 7.0) * 0.9 * life);
+            col = mix(col, vec3(0.97, 0.99, 1.0), (1.0 - smoothstep(PX * 0.6, PX * 1.6, md)) * life);
+        }
+        for (int i = 0; i < 3; i++) {
+            float ts = zt - 0.38 - float(i) * 0.04;
+            if (ts < 0.0 || ts > 0.35) continue;
+            float x0 = b.x + dir * (16.0 + float(i) * 7.0);
+            vec2 s0 = vec2(x0 - dir * 14.0, b.y + 24.0), s1 = vec2(x0 + dir * 10.0, b.y - 20.0);
+            float d = sdSeg(q, s0, mix(s0, s1, min(ts / 0.06, 1.0)));
+            float f = 1.0 - ts / 0.35;
+            col = mix(col, vec3(0.45, 0.78, 1.0), exp(-d / 8.0) * 0.9 * f);
+            col = mix(col, vec3(1.0), (1.0 - smoothstep(PX * 0.8, PX * 1.8, d)) * f);
+        }
+    } else if (sp == SP_ICHIGO) {
+        // the mask forms in black reiatsu, then Getsuga Tensho: a black crescent with a red edge flies off the blade
+        if (zt > 0.45) {
+            float z = (zt - 0.45) / 0.55;
+            vec2 c = b + vec2(dir * (30.0 + z * 380.0), 4.0);
+            vec2 l = (q - c) * vec2(dir, 1.0);
+            float outer = length(l * vec2(1.0, 0.8)), inner = length((l - vec2(-20.0, 0.0)) * vec2(1.0, 0.8));
+            float a = (1.0 - z * z);
+            if (outer < 46.0 && inner > 40.0 && l.x > -16.0) {
+                float edgeT = smoothstep(40.0, 46.0, outer);   // black inner edge -> crimson body -> red rim
+                vec3 g = mix(vec3(0.55, 0.03, 0.1), vec3(0.85, 0.08, 0.15), edgeT);
+                if (inner < 42.5) g = vec3(0.04, 0.0, 0.02);
+                if (outer > 43.0) g = vec3(1.0, 0.35, 0.35);
+                col = mix(col, g, a);
+            }
+            // smoke peeling off the back of it
+            float sm = step(0.82, hash21(floor(q / PX) + floor(iTime * 12.0))) * step(outer, 52.0) * step(46.0, outer + 14.0) * step(l.x, -6.0);
+            col = mix(col, vec3(0.2, 0.02, 0.06), sm * a * 0.8);
+        }
     } else if (sp == SP_ZORO) {
         // Onigiri: three crescent slashes, one per sword, then the cut line he dashes through
         for (int i = 0; i < 3; i++) {
@@ -372,16 +481,20 @@ vec3 signature(vec3 col, int sp, vec2 fc, vec2 feet, vec2 b, float zt, float see
             float f = 1.0 - tl / 0.4;
             col = mix(col, vec3(1.0), (1.0 - smoothstep(PX * 0.5, PX * 1.2, d)) * inside * f);
         }
-    } else if (sp == SP_SASUKE) {
-        // Chidori: lightning crackles in his hand, then bursts as he strikes
-        vec2 hand = b + vec2(dir * 18.0, -4.0);
+    } else if (sp == SP_SASUKE || sp == SP_KAKASHI) {
+        // Chidori (Sasuke) / Raikiri (Kakashi): lightning roars in the hand and bursts on the strike
+        bool rai = sp == SP_KAKASHI;
+        vec2 hand = rai ? b + ((zt < 0.55) ? vec2(-dir * 18.0, -4.0) : vec2(dir * 28.0, 6.0)) : b + vec2(dir * 18.0, -4.0);
         float charge = smoothstep(0.0, 0.3, zt) * (1.0 - smoothstep(0.75, 1.0, zt));
         float burst = (zt > 0.4 && zt < 0.6) ? 1.0 - (zt - 0.4) / 0.2 : 0.0;
+        if (rai) { charge *= 1.4; burst *= 1.3; }
         float gd = length(q - hand);
         col += vec3(0.45, 0.7, 1.0) * exp(-gd / (8.0 + 18.0 * burst)) * (0.5 * charge + 0.5 * burst);
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 8; i++) {
+            if (!rai && i >= 5) break;
             float ang = hash11(floor(iTime * 24.0) + float(i) * 4.1 + seed) * 6.283;
-            float len = (10.0 + 14.0 * hash11(float(i) + floor(iTime * 24.0))) * (1.0 + 2.5 * burst);
+            if (rai && i >= 5) ang = (dir > 0.0 ? 0.0 : PI) + (hash11(float(i) + floor(iTime * 30.0)) - 0.5) * 0.9;   // Raikiri tears forward
+            float len = (10.0 + 14.0 * hash11(float(i) + floor(iTime * 24.0))) * (1.0 + 2.5 * burst) * (rai ? 1.5 : 1.0);
             vec2 tip = hand + vec2(cos(ang), sin(ang)) * len;
             float md = boltDist(q, hand, tip, floor(iTime * 40.0) + float(i) * 7.7);
             float a = charge + burst;
@@ -408,6 +521,84 @@ vec3 hopTrail(vec3 col, int sp, vec2 fc, vec2 a, vec2 b, float arcH, float tk, f
         float l = 1.0 - age / 0.4;
         vec3 c = (sp == SP_CHARMANDER) ? mix(vec3(1.0, 0.3, 0.05), vec3(1.0, 0.9, 0.4), l) : mix(tc, vec3(1.0), 0.35 * l);
         col = mix(col, c, pdot(fc, p, 1.0) * l);
+    }
+    return col;
+}
+
+// Ultra Instinct: silver flames lick up around Goku, drawn behind the sprite
+vec3 uiAura(vec3 col, vec2 fc, vec2 c, float hw, float h, float t) {
+    vec2 q = pcentre(fc);
+    vec2 d = (q - c) / vec2(hw * 0.62 + 4.0, h * 0.56);
+    float r = length(d);
+    if (r > 1.8) return col;
+    float n = hash21(vec2(floor(q.x / (PX * 2.0)), floor((q.y - t * 120.0) / (PX * 4.0))));
+    float edge = 1.0 + 0.2 * n + 0.55 * n * smoothstep(0.0, 1.0, d.y);   // tongues lick upward
+    float rim = step(r, edge) * smoothstep(edge - 0.5, edge, r);
+    col = mix(col, mix(vec3(0.55, 0.68, 1.0), vec3(0.95, 0.97, 1.0), n), rim * 0.6);
+    for (int i = 0; i < 6; i++) {
+        float h1 = hash11(float(i) * 3.3 + 1.0);
+        float ph = fract(t * 0.8 + h1);
+        vec2 p = c + vec2((h1 - 0.5) * hw * 1.6, (ph - 0.35) * h * 1.3);
+        col = mix(col, vec3(0.95, 0.97, 1.0), pdot(fc, p, 1.0) * (1.0 - ph));
+    }
+    return col;
+}
+
+// one frame of party member k drawn with its feet at `anchor` (for afterimages and clones)
+vec4 spriteAt(int fr, int k, vec2 fc, vec2 anchor, float spx, bool flip) {
+    vec2 p = floor((fc - anchor) / spx);
+    if (flip) p.x = -p.x - 1.0;
+    return spriteFrame(fr, k, p);
+}
+
+// effects along a hop from a to b (body height), tk seconds in
+vec3 hopFx(vec3 col, int sp, vec2 fc, vec2 a, vec2 b, float arcH, float tk, float seed) {
+    vec2 q = pcentre(fc);
+    if (sp == SP_LUFFY) {   // Gear Second steam
+        for (int j = 0; j < 8; j++) {
+            float s = (float(j) + 0.5) / 8.0, age = tk - s * HOP_T;
+            if (age < 0.0 || age > 0.5) continue;
+            vec2 p = mix(a, b, s) + vec2(0.0, sin(s * PI) * arcH + age * 40.0);
+            col = mix(col, vec3(1.0, 0.9, 0.92), step(length(q - p), 3.0 + age * 18.0) * (1.0 - age / 0.5) * 0.5);
+        }
+    } else if (sp == SP_NARUTO) {   // chakra wisps
+        for (int j = 0; j < 10; j++) {
+            float s = (float(j) + 0.5) / 10.0, age = tk - s * HOP_T;
+            if (age < 0.0 || age > 0.35) continue;
+            float h = hash11(seed + float(j));
+            vec2 p = mix(a, b, s) + vec2((h - 0.5) * 12.0, sin(s * PI) * arcH + age * 60.0);
+            col = mix(col, mix(vec3(1.0, 0.45, 0.1), vec3(1.0, 0.85, 0.4), h), pdot(fc, p, 2.0) * (1.0 - age / 0.35));
+        }
+    } else if (sp == SP_KILLUA) {   // Godspeed: three bolts braided along the path
+        float fade = 1.0 - smoothstep(HOP_T * 0.6, HOP_T + 0.25, tk);
+        for (int i = 0; i < 3; i++) {
+            float md = boltDist(q, a, b, seed * 13.1 + floor(iTime * 26.0) + float(i) * 5.0);
+            col = mix(col, vec3(0.45, 0.75, 1.0), exp(-md / 7.0) * 0.4 * fade);
+            col = mix(col, vec3(0.92, 0.97, 1.0), (1.0 - smoothstep(PX * 0.3, PX * 1.1, md)) * fade);
+        }
+    } else if (sp == SP_KAKASHI) {   // Body Flicker: a swirl of leaves where he vanishes and where he lands
+        for (int e = 0; e < 2; e++) {
+            float te = (e == 0) ? tk : tk - HOP_T * 0.85;
+            if (te < 0.0 || te > 0.4) continue;
+            vec2 c = (e == 0) ? a : b;
+            for (int i = 0; i < 10; i++) {
+                float ang = float(i) * 0.628 + te * 9.0 + seed;
+                vec2 lc = c + vec2(cos(ang), sin(ang) * 0.8) * (10.0 + te * 110.0);
+                vec2 l = rot(iTime * 12.0 + float(i)) * (q - lc);
+                col = mix(col, (i % 2 == 0) ? vec3(0.35, 0.75, 0.3) : vec3(0.55, 0.85, 0.35), step(abs(l.x) / 11.0 + abs(l.y) / 4.5, 1.0) * (1.0 - te / 0.4));
+            }
+            col = mix(col, vec3(0.9, 0.9, 0.85), step(length(q - c), 4.0 + te * 30.0) * (1.0 - te / 0.4) * 0.5);
+        }
+    } else if (sp == SP_ICHIGO) {   // shunpo: speed lines along the path
+        float fade = 1.0 - smoothstep(HOP_T * 0.8, HOP_T + 0.2, tk);
+        vec2 dv = normalize(b - a + vec2(0.001));
+        vec2 nv = vec2(-dv.y, dv.x);
+        float along = dot(q - a, dv), across = dot(q - a, nv);
+        float L = length(b - a);
+        float lane = floor(across / (PX * 3.0));
+        float on = step(0.6, hash11(lane * 7.1 + seed)) * step(abs(across), 26.0);
+        float seg = step(0.0, along) * step(along, L * min(tk / HOP_T, 1.0));
+        col = mix(col, (hash11(lane) > 0.5) ? vec3(0.85, 0.12, 0.18) : vec3(0.05, 0.0, 0.03), on * seg * fade * step(fract(along / 40.0 + hash11(lane * 3.3)), 0.7));
     }
     return col;
 }
@@ -596,8 +787,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         bool moved = dist > 0.5;
         bool hop = abs(d.y) > 1.0 || abs(d.x) > cellW * 6.0;
 
-        vec2 lo = min(A, B) - vec2(170.0, 40.0);
-        vec2 hi = max(A, B) + vec2(partyW + 170.0, maxTop + 170.0 + 0.12 * dist);
+        // wide enough for the beams (Kamehameha, Getsuga Tensho) to fly
+        vec2 lo = min(A, B) - vec2(420.0, 40.0);
+        vec2 hi = max(A, B) + vec2(partyW + 420.0, maxTop + 170.0 + 0.12 * dist);
         bool near = all(greaterThan(fc, lo)) && all(lessThan(fc, hi));
         if (near) {
             bool sleeping = (tc > SLEEP_AFTER || (!visible && tc > 4.0)) && PK_STATE == 0;
@@ -620,6 +812,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                 float fk = float(k);
                 float hw = float(S_HALFW[k]) * S_PX[k];
                 float spx = S_PX[k];   // device px per sprite pixel (fighters are drawn finer)
+                float spriteH = float(S_TOP[k]) * spx;
                 float cx = slotX + hw;
                 slotX += hw * 2.0 + gap;
                 float tk = tc - fk * 0.07;
@@ -688,6 +881,61 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                 else if (working) zt = zc - 0.15;
                 else if (done && jp >= 0.45) zt = (jp - 0.45) * 0.8;
 
+                // ---- behind the sprite
+                float arcH = 28.0 + 0.12 * dist;
+                vec2 bodyC = pos + vec2(0.0, lift + spriteH * 0.45);
+                // flash steps: Kakashi (Body Flicker) and Ichigo (shunpo) vanish mid-hop
+                if ((sp == SP_KAKASHI || sp == SP_ICHIGO) && hopping && hk > 0.15 && hk < 0.85) alpha = 0.0;
+                // Ultra Instinct: a silver aura burns around Goku all the time
+                if (sp == SP_GOKU && !sleeping && !hopping && !running) col = uiAura(col, fc, bodyC, hw, spriteH, t);
+                // afterimages along the hop: Goku silver, Killua blue, Ichigo black
+                if ((sp == SP_GOKU || sp == SP_KILLUA || sp == SP_ICHIGO) && hop && visible && tk < HOP_T + 0.2) {
+                    vec3 tint = (sp == SP_GOKU) ? vec3(0.8, 0.88, 1.0) : (sp == SP_KILLUA) ? vec3(0.45, 0.75, 1.0) : vec3(0.12, 0.0, 0.04);
+                    float fadeE = 1.0 - smoothstep(HOP_T, HOP_T + 0.2, tk);
+                    for (int e = 1; e <= 3; e++) {
+                        float he = clamp(tk / HOP_T, 0.0, 1.0) - float(e) * 0.14;
+                        if (he < 0.0) continue;
+                        vec2 pe = floor((mix(A, B, he) + vec2(cx, 0.0)) / PX) * PX;
+                        float le = floor(sin(he * PI) * arcH / PX) * PX;
+                        vec4 se = spriteAt(fr, k, fc, pe - vec2(0.0, float(S_GROUND[k]) * spx - le), spx, flip);
+                        col = mix(col, mix(se.rgb, tint, 0.65), se.a * (0.5 - float(e) * 0.13) * fadeE);
+                    }
+                }
+                // Ichigo: black reiatsu flames with red tips rise behind him as the mask forms
+                if (sp == SP_ICHIGO && zt > 0.0 && zt < 0.6) {
+                    vec2 q2 = pcentre(fc);
+                    float dx = (q2.x - bodyC.x) / (spriteH * 0.42);
+                    float nf = hash21(vec2(floor(q2.x / (PX * 2.0)), floor(t * 16.0)));
+                    float top = bodyC.y + spriteH * (0.1 + 0.45 * (1.0 - dx * dx)) * (0.55 + 0.9 * nf);
+                    float env = smoothstep(0.0, 0.15, zt) * (1.0 - smoothstep(0.45, 0.6, zt));
+                    float bot = bodyC.y - spriteH * 0.45;
+                    if (abs(dx) < 1.0 && q2.y > bot && q2.y < top) {
+                        float hgt = (q2.y - bot) / max(top - bot, 1.0);   // 0 at the feet, 1 at the tip
+                        vec3 fcol = mix(vec3(0.05, 0.0, 0.03), vec3(0.55, 0.03, 0.1), smoothstep(0.35, 0.9, hgt));
+                        if (q2.y > top - PX * 3.0) fcol = vec3(1.0, 0.2, 0.25);
+                        col = mix(col, fcol, 0.9 * env);
+                    }
+                }
+                // Naruto: two shadow clones pop out in smoke beside him for the Rasengan
+                if (sp == SP_NARUTO && zt > 0.03 && zt < 0.62) {
+                    for (int e = 1; e <= 2; e++) {
+                        vec2 off = vec2(((e == 1) ? -1.0 : 1.0) * (spriteH * 0.5 + 10.0), 0.0);
+                        if (zt > 0.06 && zt < 0.42) {
+                            vec4 se = spriteAt(fr, k, fc, anchor + off, spx, flip);
+                            col = mix(col, se.rgb * 0.9, se.a);
+                        }
+                        for (int w2 = 0; w2 < 2; w2++) {
+                            float tp = (w2 == 0) ? zt - 0.03 : zt - 0.38;
+                            if (tp < 0.0 || tp > 0.25) continue;
+                            for (int i = 0; i < 5; i++) {
+                                float ang = float(i) * 1.256 + float(e);
+                                vec2 pp = bodyC + off + vec2(cos(ang), sin(ang)) * (6.0 + tp * 60.0);
+                                col = mix(col, vec3(0.93, 0.93, 0.9), step(length(pcentre(fc) - pp), 6.0 + tp * 14.0) * (1.0 - tp / 0.25) * 0.85);
+                            }
+                        }
+                    }
+                }
+
                 vec2 p = floor((fc - anchor) / spx);
                 if (flip) p.x = -p.x - 1.0;
                 vec4 s = spriteFrame(fr, k, p);
@@ -695,7 +943,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                 if (hurt && a == A_HURT && s.a > 0.0) s.rgb = mix(s.rgb, vec3(1.0, 0.3, 0.3), 0.35 * step(0.5, fract(t * 8.0)));
                 col = mix(col, s.rgb, s.a * alpha);
 
-                float spriteH = float(S_TOP[k]) * spx;
                 // ghosts leave a ring of shadow where they vanish / appear
                 if (S_GHOST[k] && hop && tk < HOP_T + 0.3) {
                     for (int e = 0; e < 2; e++) {
@@ -726,7 +973,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                 vec2 bodyP = pos + vec2(0.0, lift + spriteH * 0.45);
                 float face = flip ? -1.0 : 1.0;
                 col = signature(col, sp, fc, feetP, bodyP, zt, fk * 17.0 + floor(t / 4.0) + iTimeCursorChange, face);
-                if (hop && visible && tk < HOP_T + 0.4 && !S_GHOST[k] && sp != SP_PIKACHU && sp != SP_SNORLAX && sp != SP_SASUKE && sp != SP_ZORO)
+                if (hop && visible && tk < HOP_T + 0.5 && sp >= 100)
+                    col = hopFx(col, sp, fc, A + vec2(cx, spriteH * 0.45), B + vec2(cx, spriteH * 0.45), 28.0 + 0.12 * dist, tk, iTimeCursorChange + fk);
+                if (hop && visible && tk < HOP_T + 0.4 && !S_GHOST[k] && sp < 100 && sp != SP_PIKACHU && sp != SP_SNORLAX)
                     col = hopTrail(col, sp, fc, A + vec2(cx, spriteH * 0.45), B + vec2(cx, spriteH * 0.45), 28.0 + 0.12 * dist, tk, iTimeCursorChange + fk);
 
                 // the "!" when Claude needs you

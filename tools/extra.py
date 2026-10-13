@@ -32,7 +32,8 @@ def scale(name):
     meta = json.loads((EXTRA / name / "anims.json").read_text())
     return float(meta.get("scale", SCALE))
 # shader ids for characters with their own effects (defined even when the art is absent)
-IDS = {"zoro": 100, "sasuke": 101, "shanks": 102, "gojo": 103}
+IDS = {"zoro": 100, "sasuke": 101, "shanks": 102, "gojo": 103, "goku": 104, "luffy": 105,
+       "naruto": 106, "killua": 107, "ichigo": 108, "kakashi": 109}
 
 
 def names():
@@ -108,6 +109,34 @@ def frame(sheet, box):
     return img
 
 
+def recolor_hair(img, spec):
+    """Recolour hair that shares its black with the outlines (Ultra Instinct silver).
+
+    spec: {"colors": [[r,g,b] hair dark, [r,g,b] hair highlight], "deep": rgb, "edge": rgb,
+           "highlight": rgb}. Hair-dark pixels whose 4 neighbours are all hair colours
+    are interior: "deep" if their neighbours are interior too, else "edge". Hair-dark
+    pixels touching anything else are outline and stay as they are.
+    """
+    dark, hi = (tuple(c) for c in spec["colors"])
+    hair = {dark, hi}
+    w, h = img.size
+    px = img.load()
+    rgb = lambda x, y: px[x, y][:3] if 0 <= x < w and 0 <= y < h and px[x, y][3] > 127 else None
+    n4 = ((1, 0), (-1, 0), (0, 1), (0, -1))
+    inner = {(x, y) for y in range(h) for x in range(w)
+             if rgb(x, y) == dark and all(rgb(x + dx, y + dy) in hair for dx, dy in n4)}
+    out = img.copy()
+    o = out.load()
+    for x, y in inner:
+        deep = all((x + dx, y + dy) in inner or rgb(x + dx, y + dy) == hi for dx, dy in n4)
+        o[x, y] = tuple(spec["deep" if deep else "edge"]) + (255,)
+    for y in range(h):
+        for x in range(w):
+            if rgb(x, y) == hi:
+                o[x, y] = tuple(spec["highlight"]) + (255,)
+    return out
+
+
 def feet_x(img):
     """Horizontal anchor: the middle of the bottom few rows (the feet), so swords
     and slashes sticking out don't make the body jump around between frames."""
@@ -137,6 +166,8 @@ def load(name, anim_names):
         frames = []
         for fi in a["frames"]:
             img = frame(sheet, boxes[fi])
+            if meta.get("hair"):
+                img = recolor_hair(img, meta["hair"])
             if meta.get("faces") == "left":
                 img = img.transpose(Image.FLIP_LEFT_RIGHT)
             frames.append((img, feet_x(img), img.height, 1.0 / a.get("fps", 10)))
@@ -151,11 +182,41 @@ def portrait(name):
     sheet = Image.open(folder / meta.get("sheet", "sheet.png")).convert("RGB")
     p = meta.get("portrait", {"frame": meta["anims"]["Idle"]["frames"][0]})
     img = frame(sheet, segment(sheet)[p["frame"]])
+    if meta.get("hair"):
+        img = recolor_hair(img, meta["hair"])
     if meta.get("faces") == "left":
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
     return img.transpose(Image.FLIP_LEFT_RIGHT)   # face the text box on the right
 
 
+def grid(folder, per_page=60, cols=10, cell=(84, 74), zoom=2):
+    """Frames in index order on a regular numbered grid, a page per `per_page`."""
+    folder = pathlib.Path(folder)
+    sheet = Image.open(folder / "sheet.png").convert("RGB")
+    boxes = segment(sheet)
+    cw, ch = cell[0] * zoom, cell[1] * zoom
+    pages = []
+    for start in range(0, len(boxes), per_page):
+        chunk = boxes[start:start + per_page]
+        rows = (len(chunk) + cols - 1) // cols
+        page = Image.new("RGB", (cw * cols, ch * rows), (40, 42, 60))
+        d = ImageDraw.Draw(page)
+        for i, b in enumerate(chunk):
+            im = frame(sheet, b)
+            im.thumbnail((cell[0], cell[1] - 10))
+            im = im.resize((im.width * zoom, im.height * zoom), Image.NEAREST)
+            x, y = (i % cols) * cw, (i // cols) * ch
+            page.paste(im, (x + (cw - im.width) // 2, y + ch - im.height - 2), im)
+            d.text((x + 3, y + 2), str(start + i), fill=(255, 230, 0))
+            d.rectangle([x, y, x + cw - 1, y + ch - 1], outline=(70, 72, 95))
+        dest = ROOT / "preview" / f"grid_{folder.name}_{start // per_page}.png"
+        page.save(dest)
+        pages.append(dest.name)
+    print(len(boxes), "frames ->", " ".join(pages))
+
+
 if __name__ == "__main__":
     if sys.argv[1:2] == ["contact"]:
         contact(sys.argv[2])
+    if sys.argv[1:2] == ["grid"]:
+        grid(sys.argv[2])
