@@ -13,8 +13,13 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
 def party_names():
+    """party.conf holds 1-3 species, or "random" (the default): then the
+    partner rolled for this session is read from .partner (see poketerm.zsh)."""
     conf = ROOT / "party.conf"
-    names = conf.read_text().split() if conf.exists() else ["pikachu"]
+    names = conf.read_text().split() if conf.exists() else ["random"]
+    if names == ["random"]:
+        cur = ROOT / ".partner"
+        names = cur.read_text().split() if cur.exists() else ["pikachu"]
     names = [n.lower() for n in names if n.lower() in pmd.ROSTER][:3]
     return names or ["pikachu"]
 
@@ -127,7 +132,9 @@ def ansi_portraits():
 
 
 def main():
-    ansi_portraits()
+    import sys
+    if "--shader-only" not in sys.argv:
+        ansi_portraits()
     party = glsl_party(party_names())
     for src in (ROOT / "shaders").glob("*.src.glsl"):
         out = src.with_name(src.name.replace(".src.glsl", ".glsl"))

@@ -1,7 +1,8 @@
 #!/bin/zsh
 # poke — control poketerm
 #   poke                       show your party and options
-#   poke party pikachu gengar  choose up to 3 followers (run `poke` to list them)
+#   poke party pikachu gengar  pin up to 3 followers (run `poke` to list them)
+#   poke random                a random partner every new window (the default)
 #   poke wild [NAME] [shiny]   summon a wild encounter
 #   poke off | on              turn the shader effects off / back on
 #   poke reload                rebuild the shader and reload Ghostty
@@ -11,8 +12,7 @@ SPECIES=(pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squi
 reload() {
   local py=$H/tools/.venv/bin/python; [[ -x $py ]] || py=python3
   $py $H/tools/build.py >/dev/null || { print -u2 "build failed"; return 1; }
-  osascript -e 'tell application "Ghostty" to perform action "reload_config" on focused terminal of selected tab of front window' >/dev/null 2>&1 \
-    || print "rebuilt — press ⌘⇧, in Ghostty to reload"
+  pkill -USR2 -x ghostty 2>/dev/null || print "rebuilt — press ⌘⇧, in Ghostty to reload"
 }
 
 case $1 in
@@ -27,6 +27,10 @@ case $1 in
     print -- "$pick" > $H/party.conf
     reload && print "party: $pick"
     ;;
+  random)
+    print random > $H/party.conf
+    print "a random partner joins you in every new Ghostty window"
+    ;;
   wild)
     POKETERM_HOME=$H source $H/shell/poketerm.zsh
     poke_encounter ${(U)2} $([[ $3 == shiny ]] && print 1)
@@ -39,7 +43,9 @@ case $1 in
     ;;
   reload) reload ;;
   *)
-    print "party: $(<$H/party.conf)"
+    local conf=$(<$H/party.conf 2>/dev/null)
+    if [[ $conf == (|random) ]]; then print "party: random each window (now: $(<$H/.partner 2>/dev/null))"
+    else print "party: $conf (pinned — \`poke random\` to roll each window)"; fi
     print "pokémon: $SPECIES"
     sed -n '2,7p' $0 | sed 's/^# \{0,1\}//'
     ;;

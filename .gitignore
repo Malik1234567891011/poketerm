@@ -5,3 +5,4 @@ preview/
 __pycache__/
 ghostty/config
 party.conf
+.partner

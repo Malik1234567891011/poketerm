@@ -48,8 +48,8 @@ Uninstall with `~/poketerm/uninstall.sh`. It removes exactly those pieces.
 - A location sign when you walk into a different repo.
 
 **Claude Code (`claude/`)**
-- Battle-HUD status line: `◓ OPUS 5.5 Lv.90 · HP ▰▰▰▰▱ · PP 63 · ₽4.21 · ⌁ repo · branch`
-  (HP = context left, PP = 5-hour rate limit left, ₽ = cost).
+- Battle-HUD status line: `OPUS 5.5 · HP ▰▰▰▰▰▰▰▰▰▱ 91% · PP 93% · repo · branch`
+  (HP = context window left, PP = 5-hour usage limit left).
 - `custom:poketerm` theme. Claude's accent and spinner are in electric ink, so they crackle. The input box border is shiny ink, permission prompts are fire, and plan mode is ghost.
 - The spinner shows Pokémon moves ("Thunderbolting…", "Waiting for Snorlax to move…").
 - Original 8-bit jingles: a level-up when Claude finishes and a "!" alert when it needs you.
@@ -60,8 +60,9 @@ Uninstall with `~/poketerm/uninstall.sh`. It removes exactly those pieces.
 
 ```
 poke                         show party + roster
-poke party pikachu           solo partner (default)
-poke party eevee gengar mew  up to three followers
+poke random                  a random partner every new window (default)
+poke party pikachu           pin one partner
+poke party eevee gengar mew  pin up to three followers
 poke wild [NAME] [shiny]     summon an encounter
 poke off / poke on           disable / enable the shader
 poke reload                  rebuild + reload Ghostty

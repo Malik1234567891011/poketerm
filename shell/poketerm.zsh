@@ -37,7 +37,10 @@ poke_encounter() {
   local file=$POKETERM_HOME/shell/sprites/$name.$mood.ans
   [[ -r $file ]] || return 0
   local -a art=("${(@f)$(<$file)}")
-  local lead=${${(z)$(<$POKETERM_HOME/party.conf 2>/dev/null)}[1]:-pikachu}
+  local conf=$(<$POKETERM_HOME/party.conf 2>/dev/null)
+  [[ $conf == (|random) ]] && conf=$(<$POKETERM_HOME/.partner 2>/dev/null)
+  local -a team=(${(z)conf})
+  local lead=${team[1]:-pikachu}
   local w=40 n=${#art} top=$(( ${#art} / 2 - 2 ))
   local pad="  " gap="   "
   local -a box=(
@@ -127,7 +130,21 @@ add-zsh-hook chpwd _poke_chpwd
 _poke_area=$(git rev-parse --show-toplevel 2>/dev/null)
 
 # greet on new Ghostty surfaces (the shader's Poké Ball intro opens onto this)
-if [[ $TERM_PROGRAM == ghostty && ${POKETERM_GREET:-1} == 1 && -z $_POKETERM_GREETED ]]; then
+# random partner each session: roll one, rebake the shader in the background and
+# signal Ghostty to reload (SIGUSR2). `poke party X` pins one instead.
+_poke_roll_partner() {
+  [[ $(<$POKETERM_HOME/party.conf 2>/dev/null) == (|random) ]] || return 0
+  local -a roster=(${${${(f)"$(print -l $POKETERM_HOME/art/pmd/*(/N))"}:t}})
+  (( ${#roster} )) || return 0
+  local pick=${roster[RANDOM % ${#roster} + 1]}
+  print -r -- $pick > $POKETERM_HOME/.partner
+  local py=$POKETERM_HOME/tools/.venv/bin/python; [[ -x $py ]] || py=python3
+  # (the short wait lets a just-launched Ghostty finish starting before the reload signal)
+  ( $py $POKETERM_HOME/tools/build.py --shader-only >/dev/null 2>&1 && sleep 0.8 && pkill -USR2 -x ghostty ) &!
+}
+
+if [[ $TERM_PROGRAM == ghostty && -z $_POKETERM_GREETED ]]; then
   export _POKETERM_GREETED=1
-  poke_encounter
+  _poke_roll_partner
+  [[ ${POKETERM_GREET:-1} == 1 ]] && poke_encounter
 fi
