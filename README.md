@@ -102,3 +102,5 @@ Pokémon sprites and portraits are from [PMD SpriteCollab](https://github.com/PM
 Everything else (shader, effects, inks, intro, HUD, sounds, icon) is original.
 This is an unofficial, non-commercial fan project, not affiliated with Nintendo, Game Freak, Creatures or The Pokémon Company.
 Font: [Departure Mono](https://departuremono.com) (OFL).
+
+Code license: MIT (see `LICENSE`), sprites excluded.
