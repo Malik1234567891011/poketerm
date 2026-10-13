@@ -27,7 +27,27 @@ Uninstall with `~/poketerm/uninstall.sh`. It removes exactly those pieces.
 ## What it does
 
 **GPU shader (`shaders/poketerm.src.glsl`)**, a post-process over every Ghostty frame:
-- **Partner Pokémon** follows your cursor. It walks while you type, hops to new lines (Pikachu leaves pixel lightning and fires its Shock animation when it lands), naps with Zzz after 30s idle, and flinches when a command fails. When an app hides the cursor (Claude Code), it walks to the grass in the bottom-right corner and sleeps there.
+- **Partner Pokémon** follows your cursor. It walks while you type, hops to new lines and uses its signature move when it lands (see below), naps with Zzz after 30s idle, and flinches when a command fails. When an app hides the cursor, it walks to the grass in the bottom-right corner and sleeps there.
+- **Signature moves** on every landing:
+
+  | | |
+  |---|---|
+  | Pikachu | a lightning trail, then Thunderbolt arcs from its cheeks |
+  | Charmander | Ember: sparks fly and a ring of flame licks the ground |
+  | Squirtle | a splash and a ripple |
+  | Bulbasaur | Razor Leaf: spinning leaves |
+  | Eevee | Swift: golden stars spiral out |
+  | Mew | a psychic bubble swells and pops |
+  | Snorlax | lands so hard the text shakes, with dust and impact lines |
+  | Voltorb | sparks, and Explosion when a command fails |
+  | Ditto | jelly wobble and goo splats |
+  | Psyduck | Confusion rings from its aching head |
+  | Jigglypuff | a burst of rainbow notes (it also sings when you go idle) |
+  | Gengar | Shadow Ball |
+  | Gastly | Smog clouds |
+  | Mimikyu | Shadow Claw |
+
+  The ghosts (Gengar, Gastly, Mimikyu) don't hop at all: they vanish and reappear.
 - **Living ink**: text printed in four exact colours becomes an animated material.
   The shader recognises the colour on the GPU, so any program can use it.
 
@@ -53,6 +73,18 @@ Uninstall with `~/poketerm/uninstall.sh`. It removes exactly those pieces.
 - `custom:poketerm` theme. Claude's accent and spinner are in electric ink, so they crackle. The input box border is shiny ink, permission prompts are fire, and plan mode is ghost.
 - The spinner shows Pokémon moves ("Thunderbolting…", "Waiting for Snorlax to move…").
 - Original 8-bit jingles: a level-up when Claude finishes and a "!" alert when it needs you.
+- **The world reacts while Claude works.** Hooks tell the shader what Claude is doing
+  (`claude/state.zsh`), and it builds up the longer Claude runs:
+  - **working:** your party wakes up and takes turns using their moves
+  - **after 20s:** energy gathers into your lead Pokémon and the grass picks up wind
+  - **after 1 min:** an aurora spreads across the sky
+  - **after 3 min:** a meteor shower
+  - **needs your permission:** a "!" pops up over your lead Pokémon
+  - **done:** a beam of light comes down on the party (with thunder if Pikachu or Voltorb is in it)
+
+  How it gets there: the shader can only see pixels, so `state.zsh` writes an escape code that
+  nudges palette colour 255 (`#eeeeee`) by an invisible 1-13 steps of blue. Ghostty passes the
+  live palette to shaders, and the shader reads the state back from it.
 
 **Ghostty**: custom Poké Ball app icon, chiptune bell, Departure Mono pixel font.
 
@@ -65,7 +97,7 @@ poke party pikachu           pin one partner
 poke party eevee gengar mew  pin up to three followers
 poke wild [NAME] [shiny]     summon an encounter
 poke off / poke on           disable / enable the shader
-poke reload                  rebuild + reload Ghostty
+poke reload                  rebuild the shader (new tabs/windows pick it up)
 ```
 
 Roster: pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squirtle snorlax mew psyduck mimikyu gastly

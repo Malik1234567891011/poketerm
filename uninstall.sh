@@ -16,5 +16,6 @@ if [[ -f ~/.zshrc ]]; then
   sed -i '' -e '/^# poketerm/d' -e "\|$H/shell/poketerm.zsh|d" ~/.zshrc && print "cleaned ~/.zshrc"
 fi
 
+pkill -f "state.zsh tick" 2>/dev/null
 python3 $H/tools/claude_setup.py uninstall && print "cleaned ~/.claude/settings.json"
 print "poketerm removed. Open a new terminal; delete $H whenever you like."

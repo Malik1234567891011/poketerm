@@ -3,6 +3,7 @@
 shaders/*.src.glsl -> shaders/*.glsl   (//@PARTY marker)
 art/pmd/<name>/portrait-*.png -> shell/sprites/<NAME>.<mood>.ans
 """
+import os
 import pathlib
 
 from PIL import Image
@@ -20,6 +21,8 @@ def party_names():
     if names == ["random"]:
         cur = ROOT / ".partner"
         names = cur.read_text().split() if cur.exists() else ["pikachu"]
+    if os.environ.get("POKETERM_PARTY"):  # preview a party without touching party.conf
+        names = os.environ["POKETERM_PARTY"].split()
     names = [n.lower() for n in names if n.lower() in pmd.ROSTER][:3]
     return names or ["pikachu"]
 
@@ -77,6 +80,9 @@ def glsl_party(names):
         "// sprites: PMD SpriteCollab (CC BY-NC 4.0), credits in art/pmd/*/credits.txt",
         f"#define PARTY_N {len(names)}",
         f"#define PARTY_HAS_JIGGLY {'true' if 'jigglypuff' in names else 'false'}",
+        f"#define PARTY_HAS_SNORLAX {'true' if 'snorlax' in names else 'false'}",
+        f"#define PARTY_ELECTRIC {'true' if {'pikachu', 'voltorb'} & set(names) else 'false'}",
+        "\n".join(f"#define SP_{n.upper()} {i}" for i, n in enumerate(pmd.ROSTER)),
         "#define A_WALK 0\n#define A_IDLE 1\n#define A_SLEEP 2\n#define A_HOP 3\n#define A_HURT 4\n#define A_SPECIAL 5",
         "#define IS_PIKACHU(k) (" + (" || ".join(f"(k) == {i}" for i in pika) or "false") + ")",
         "#define IS_JIGGLY(k) (" + (" || ".join(f"(k) == {i}" for i, n in enumerate(names) if n == "jigglypuff") or "false") + ")",
@@ -90,6 +96,7 @@ def glsl_party(names):
         arr("int", "S_HALFW", pad(half_w, half_w[0])),
         arr("int", "S_TOP", pad(top, top[0])),
         arr("bool", "S_GHOST", pad(ghost, False), lambda v: "true" if v else "false"),
+        arr("int", "S_SPECIES", pad([list(pmd.ROSTER).index(n) for n in names], -1)),
         arr("vec3", "PAL", pal, lambda c: f"vec3({c[0] / 255:.3f}, {c[1] / 255:.3f}, {c[2] / 255:.3f})"),
     ]
     print(f"party {names}: {len(words)} sprite words, {len(fr_off)} frames")

@@ -41,6 +41,7 @@ uniform int   iCursorVisible;
 uniform float iTimeCursorChange;
 uniform float iTimeFocus;
 uniform int   iFocus;
+uniform vec3  iPalette[256];
 uniform vec3  iBackgroundColor;
 uniform vec3  iForegroundColor;
 uniform vec3  iCursorColor;
@@ -68,6 +69,7 @@ class Term:
         self.row = self.col = 0
         self.fg = FG
         self.visible = True
+        self.claude = 0   # palette-255 state code from claude/state.zsh
 
     def write(self, s):
         pos = 0
@@ -148,6 +150,27 @@ def timeline(name):
         at(0.6, lambda T: T.write("\npika pchu\n~/poketerm ❯ "))
         at(0.7, lambda T: None)
         typeit("cat pokedex.txt", 0.07)
+        at(0.4, lambda T: T.write("\ncat: pokedex.txt: No such file or directory\n\n~/poketerm " + ink("156;124;243", "fainted 1") + " ❯ "))
+    if name == "claude":
+        # Claude Code takes over (cursor hidden), works for a long time, asks, finishes.
+        # Timeline is compressed: each state is held for a few seconds.
+        def claude_ui(T):
+            T.visible = False
+            T.write("claude\n\n" + ink("255;209;5", "✻ Thunderbolting…") + "  (esc to interrupt)\n\n> fix the flaky test\n")
+        at(0.8, claude_ui)
+        for code, hold in ((1, 3.0), (2, 3.0), (3, 3.0), (4, 3.5), (5, 2.5)):
+            at(hold if code > 1 else 0.6, lambda T, c=code: setattr(T, "claude", c))
+        for code in range(6, 14):
+            at(0.2, lambda T, c=code: setattr(T, "claude", c))
+        at(0.2, lambda T: setattr(T, "claude", 0))
+    if name == "hops":
+        # a few quick commands so the party hops line to line, then one fails
+        for cmd in ("ls", "pwd", "whoami"):
+            at(1.4, lambda T: None)
+            typeit(cmd, 0.06)
+            at(0.3, lambda T, c=cmd: T.write("\n" + {"ls": "art bin claude", "pwd": "/Users/ash/poketerm", "whoami": "ash"}[c] + "\n~/poketerm ❯ "))
+        at(1.2, lambda T: None)
+        typeit("cat pokedex.txt", 0.05)
         at(0.4, lambda T: T.write("\ncat: pokedex.txt: No such file or directory\n\n~/poketerm " + ink("156;124;243", "fainted 1") + " ❯ "))
     return ev
 
@@ -239,6 +262,11 @@ class Renderer:
             self.set("iTimeCursorChange", tchange)
             self.set("iCursorVisible", 1 if T.visible else 0)
             self.set("iFocus", 1)
+            pal = [(0.93, 0.93, 0.93)] * 256
+            if T.claude:
+                pal[255] = (238 / 255, 238 / 255, (238 + T.claude) / 255)
+            if "iPalette" in self.prog:
+                self.prog["iPalette"].value = pal
             self.set("iBackgroundColor", tuple(c / 255 for c in BG))
             self.set("iForegroundColor", tuple(c / 255 for c in FG))
             self.set("iCursorColor", tuple(c / 255 for c in CURSOR))

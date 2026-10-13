@@ -29,11 +29,23 @@ def sound(name, vol):
     return {"type": "command", "command": f"afplay -v {vol} '{ROOT}/sounds/{name}.wav'", "async": True}
 
 
-HOOKS = {"Stop": sound("levelup", 0.35), "Notification": sound("alert", 0.45)}
+def state(arg):
+    return {"type": "command", "command": f"zsh '{ROOT}/claude/state.zsh' {arg}", "async": True}
+
+
+# sounds, plus the state signal that lets the shader react to what Claude is doing
+HOOKS = {
+    "UserPromptSubmit": [state("work")],
+    "PreToolUse": [state("tool")],
+    "Notification": [sound("alert", 0.45), state("need")],
+    "Stop": [sound("levelup", 0.35), state("done")],
+    "SessionEnd": [state("end")],
+}
 
 
 def ours(hook):
-    return "poketerm" in hook.get("command", "") and "afplay" in hook.get("command", "")
+    cmd = hook.get("command", "")
+    return "poketerm" in cmd and ("afplay" in cmd or "state.zsh" in cmd)
 
 
 def strip_hooks(s):
@@ -62,8 +74,8 @@ def install(s):
     s["statusLine"] = {"type": "command", "command": f"python3 '{ROOT}/claude/statusline.py'", "padding": 0}
     s["spinnerVerbs"] = {"mode": "replace", "verbs": VERBS}
     strip_hooks(s)
-    for event, hook in HOOKS.items():
-        s.setdefault("hooks", {}).setdefault(event, []).append({"hooks": [hook]})
+    for event, hooks in HOOKS.items():
+        s.setdefault("hooks", {}).setdefault(event, []).append({"hooks": hooks})
 
 
 def uninstall(s):

@@ -12,7 +12,7 @@ SPECIES=(pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squi
 reload() {
   local py=$H/tools/.venv/bin/python; [[ -x $py ]] || py=python3
   $py $H/tools/build.py >/dev/null || { print -u2 "build failed"; return 1; }
-  pkill -USR2 -x ghostty 2>/dev/null || print "rebuilt — press ⌘⇧, in Ghostty to reload"
+  print "rebuilt: open a new tab or window to see it (Ghostty compiles shaders per window)"
 }
 
 case $1 in
