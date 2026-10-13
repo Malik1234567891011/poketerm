@@ -19,7 +19,7 @@ def party_names():
     partner rolled for this session is read from .partner (see poketerm.zsh)."""
     conf = ROOT / "party.conf"
     names = conf.read_text().split() if conf.exists() else ["random"]
-    if names == ["random"]:
+    if names in (["random"], ["order"]):
         cur = ROOT / ".partner"
         names = cur.read_text().split() if cur.exists() else ["pikachu"]
     if (ROOT / ".try").exists():  # `poke try NAME`: one species, for the next tab only
@@ -86,7 +86,7 @@ def glsl_party(names):
         f"#define PARTY_HAS_JIGGLY {'true' if 'jigglypuff' in names else 'false'}",
         f"#define PARTY_HAS_DARKRAI {'true' if 'darkrai' in names else 'false'}",
         f"#define PARTY_HAS_SNORLAX {'true' if 'snorlax' in names else 'false'}",
-        f"#define PARTY_ELECTRIC {'true' if {'pikachu', 'voltorb'} & set(names) else 'false'}",
+        f"#define PARTY_ELECTRIC {'true' if 'pikachu' in names else 'false'}",
         "\n".join(f"#define SP_{n.upper()} {i}" for i, n in enumerate(pmd.ROSTER)),
         "\n".join(f"#define SP_{n.upper()} {i}" for n, i in extra.IDS.items()),
         "#define A_WALK 0\n#define A_IDLE 1\n#define A_SLEEP 2\n#define A_HOP 3\n#define A_HURT 4\n#define A_SPECIAL 5",

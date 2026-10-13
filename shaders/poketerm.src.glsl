@@ -85,14 +85,13 @@ int pickFrame(int id, float at, bool loop) {
 }
 
 vec3 typeCol(int sp) {
-    if (sp == SP_PIKACHU || sp == SP_VOLTORB) return vec3(1.0, 0.85, 0.2);
+    if (sp == SP_PIKACHU) return vec3(1.0, 0.85, 0.2);
     if (sp == SP_CHARMANDER) return vec3(1.0, 0.5, 0.15);
     if (sp == SP_SQUIRTLE || sp == SP_PSYDUCK) return vec3(0.4, 0.72, 1.0);
     if (sp == SP_BULBASAUR) return vec3(0.4, 0.9, 0.45);
     if (sp == SP_JIGGLYPUFF || sp == SP_MEW) return vec3(1.0, 0.6, 0.85);
     if (sp == SP_EEVEE) return vec3(0.95, 0.75, 0.45);
     if (sp == SP_SNORLAX) return vec3(0.5, 0.8, 0.85);
-    if (sp == SP_DITTO) return vec3(0.82, 0.62, 0.95);
     if (sp == SP_DARKRAI) return vec3(0.85, 0.18, 0.3);
     if (sp == SP_ZORO) return vec3(0.35, 0.85, 0.45);
     if (sp == SP_SASUKE) return vec3(0.55, 0.75, 1.0);
@@ -198,17 +197,14 @@ vec3 signature(vec3 col, int sp, vec2 fc, vec2 feet, vec2 b, float zt, float see
     if (zt < 0.0 || zt > 1.0) return col;
     vec2 q = pcentre(fc);
     float life = 1.0 - zt;
-    if (sp == SP_PIKACHU || sp == SP_VOLTORB) {
+    if (sp == SP_PIKACHU) {
         // short arcs crackling out of the cheeks
-        bool pika = sp == SP_PIKACHU;
-        float dur = pika ? 0.6 : 0.4;
-        if (zt < dur) for (int i = 0; i < 3; i++) {
-            if (!pika && i == 2) break;
+        if (zt < 0.6) for (int i = 0; i < 3; i++) {
             float ang = hash11(floor(iTime * 16.0) + float(i) * 3.7 + seed) * 6.283;
-            vec2 tip = b + vec2(cos(ang), sin(ang) * 0.7 + 0.3) * ((pika ? 36.0 : 22.0) + 20.0 * hash11(float(i) + floor(iTime * 16.0)));
+            vec2 tip = b + vec2(cos(ang), sin(ang) * 0.7 + 0.3) * (36.0 + 20.0 * hash11(float(i) + floor(iTime * 16.0)));
             float md = boltDist(q, b, tip, floor(iTime * 30.0) + float(i) * 9.1);
-            float f = 1.0 - zt / dur;
-            col = mix(col, pika ? vec3(1.0, 0.9, 0.3) : vec3(0.7, 0.85, 1.0), exp(-md / 6.0) * 0.5 * f);
+            float f = 1.0 - zt / 0.6;
+            col = mix(col, vec3(1.0, 0.9, 0.3), exp(-md / 6.0) * 0.5 * f);
             col = mix(col, vec3(1.0, 1.0, 0.9), (1.0 - smoothstep(PX * 0.4, PX * 1.2, md)) * f);
         }
     } else if (sp == SP_CHARMANDER) {
@@ -226,19 +222,16 @@ vec3 signature(vec3 col, int sp, vec2 fc, vec2 feet, vec2 b, float zt, float see
             float hgt = (10.0 + 18.0 * n) * (1.0 - zt / 0.6) * (1.0 - abs(dx - R) / 22.0);
             if (dy < hgt) col = mix(col, mix(vec3(1.0, 0.85, 0.3), vec3(1.0, 0.3, 0.05), dy / max(hgt, 1.0)), 0.9);
         }
-    } else if (sp == SP_SQUIRTLE || sp == SP_DITTO) {
-        // a splash (Squirtle) or goo splats (Ditto): drops thrown up that fall back
-        bool water = sp == SP_SQUIRTLE;
+    } else if (sp == SP_SQUIRTLE) {
+        // a splash: drops thrown up that fall back, and a ripple
         for (int i = 0; i < 14; i++) {
-            if (!water && i >= 8) break;
             float h1 = hash11(seed + float(i) * 2.31), h2 = hash11(seed + float(i) * 7.03);
-            vec2 v = vec2((h1 - 0.5) * (water ? 280.0 : 200.0), (water ? 150.0 : 90.0) + h2 * 200.0);
+            vec2 v = vec2((h1 - 0.5) * 280.0, 150.0 + h2 * 200.0);
             vec2 p = feet + vec2(0.0, 4.0) + v * zt - vec2(0.0, 650.0) * zt * zt;
             if (p.y < feet.y - PX || zt > 0.9) continue;
-            vec3 c = water ? mix(vec3(0.45, 0.75, 1.0), vec3(0.9, 0.97, 1.0), h2) : mix(vec3(0.72, 0.5, 0.88), vec3(0.9, 0.75, 1.0), h2);
-            col = mix(col, c, pdot(fc, p, h1 > 0.75 ? 2.0 : 1.0));
+            col = mix(col, mix(vec3(0.45, 0.75, 1.0), vec3(0.9, 0.97, 1.0), h2), pdot(fc, p, h1 > 0.75 ? 2.0 : 1.0));
         }
-        if (water && zt < 0.8) {
+        if (zt < 0.8) {
             float rx = 16.0 + zt * 150.0;
             float ring = 1.0 - smoothstep(0.0, PX * 1.2, abs(length((q - feet) * vec2(1.0, 4.0)) - rx));
             col = mix(col, vec3(0.55, 0.82, 1.0), ring * (1.0 - zt / 0.8) * 0.8);
@@ -395,18 +388,6 @@ vec3 signature(vec3 col, int sp, vec2 fc, vec2 feet, vec2 b, float zt, float see
             col = mix(col, vec3(0.5, 0.75, 1.0), exp(-md / 4.0) * 0.6 * min(a, 1.0));
             col = mix(col, vec3(0.92, 0.97, 1.0), (1.0 - smoothstep(PX * 0.3, PX, md)) * min(a, 1.0));
         }
-    } else if (sp == SP_MIMIKYU) {
-        // Shadow Claw: three slashes rake the air in front of it
-        for (int i = 0; i < 3; i++) {
-            float ts = zt - float(i) * 0.08;
-            if (ts < 0.0 || ts > 0.45) continue;
-            float x0 = b.x + dir * (18.0 + float(i) * 10.0);
-            vec2 s0 = vec2(x0 - dir * 12.0, b.y + 26.0), s1 = vec2(x0 + dir * 12.0, b.y - 18.0);
-            float d = sdSeg(q, s0, mix(s0, s1, min(ts / 0.08, 1.0)));
-            float f = 1.0 - ts / 0.45;
-            col = mix(col, vec3(0.5, 0.22, 0.8), exp(-d / 7.0) * 0.7 * f);
-            col = mix(col, vec3(0.95, 0.9, 1.0), (1.0 - smoothstep(PX * 0.6, PX * 1.6, d)) * f);
-        }
     }
     return col;
 }
@@ -421,7 +402,7 @@ vec3 hopTrail(vec3 col, int sp, vec2 fc, vec2 a, vec2 b, float arcH, float tk, f
         float h = hash11(seed + float(j) * 3.1);
         vec2 p = mix(a, b, s) + vec2(0.0, sin(s * PI) * arcH) + (vec2(h, hash11(h * 91.0)) - 0.5) * 10.0;
         if (sp == SP_CHARMANDER) p += vec2((h - 0.5) * 20.0, 60.0) * age;
-        else if (sp == SP_SQUIRTLE || sp == SP_DITTO) p += vec2((h - 0.5) * 20.0, -120.0 * age) * age;
+        else if (sp == SP_SQUIRTLE) p += vec2((h - 0.5) * 20.0, -120.0 * age) * age;
         else if (sp == SP_BULBASAUR) p += vec2(sin(age * 12.0 + h * 6.0) * 14.0, -40.0) * age;
         else p += (vec2(h, 1.0 - h) - 0.4) * 30.0 * age;
         float l = 1.0 - age / 0.4;
@@ -429,24 +410,6 @@ vec3 hopTrail(vec3 col, int sp, vec2 fc, vec2 a, vec2 b, float arcH, float tk, f
         col = mix(col, c, pdot(fc, p, 1.0) * l);
     }
     return col;
-}
-
-// Voltorb uses Explosion when a command fails
-vec3 boom(vec3 col, vec2 fc, vec2 c, float z) {
-    if (z < 0.0 || z > 1.0) return col;
-    float B = PX * 2.0;
-    vec2 q = floor(fc / B) * B + B * 0.5;
-    float d = length(q - c);
-    float R = 12.0 + 70.0 * (1.0 - pow(1.0 - min(z / 0.35, 1.0), 3.0));
-    float n = hash21(floor(q / B) + floor(z * 20.0));
-    if (d < R) {
-        float k = d / R + n * 0.25 - z * 0.6;
-        vec3 f = k < 0.3 ? vec3(1.0, 1.0, 0.85) : k < 0.55 ? vec3(1.0, 0.85, 0.3) : k < 0.8 ? vec3(1.0, 0.45, 0.1) : vec3(0.35, 0.3, 0.3);
-        f = mix(f, vec3(0.3, 0.28, 0.3), smoothstep(0.5, 0.9, z));
-        col = mix(col, f, (z < 0.6 ? 1.0 : 1.0 - (z - 0.6) / 0.4) * step(n * 0.4, 1.3 - d / R));
-    }
-    float ring = 1.0 - smoothstep(0.0, PX * 1.5, abs(length(pcentre(fc) - c) - (30.0 + z * 260.0)));
-    return mix(col, vec3(1.0), ring * (1.0 - z) * 0.7);
 }
 
 // the "!" a Pokémon shows when it spots you: 9x11 sprite pixels, origin bottom-left
@@ -726,11 +689,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                 else if (done && jp >= 0.45) zt = (jp - 0.45) * 0.8;
 
                 vec2 p = floor((fc - anchor) / spx);
-                if (sp == SP_DITTO && zt > 0.0 && zt < 0.7) {   // jelly wobble
-                    float w = 0.35 * exp(-zt * 6.0) * sin(zt * 28.0);
-                    float g = float(S_GROUND[k]);
-                    p = floor(vec2(p.x / (1.0 + w), g + (p.y - g) / (1.0 - w * 0.8)));
-                }
                 if (flip) p.x = -p.x - 1.0;
                 vec4 s = spriteFrame(fr, k, p);
                 if (S_GHOST[k] && s.a > 0.0) s.rgb = mix(s.rgb, vec3(0.75, 0.6, 1.0), 0.12 + 0.08 * sin(t * 3.0 + p.y * 0.6));
@@ -768,7 +726,6 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
                 vec2 bodyP = pos + vec2(0.0, lift + spriteH * 0.45);
                 float face = flip ? -1.0 : 1.0;
                 col = signature(col, sp, fc, feetP, bodyP, zt, fk * 17.0 + floor(t / 4.0) + iTimeCursorChange, face);
-                if (sp == SP_VOLTORB && hurt) col = boom(col, fc, bodyP, tk);
                 if (hop && visible && tk < HOP_T + 0.4 && !S_GHOST[k] && sp != SP_PIKACHU && sp != SP_SNORLAX)
                     col = hopTrail(col, sp, fc, A + vec2(cx, spriteH * 0.45), B + vec2(cx, spriteH * 0.45), 28.0 + 0.12 * dist, tk, iTimeCursorChange + fk);
 

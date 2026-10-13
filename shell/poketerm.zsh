@@ -41,7 +41,7 @@ poke_encounter() {
   [[ -r $file ]] || return 0
   local -a art=("${(@f)$(<$file)}")
   local conf=$(<$POKETERM_HOME/party.conf 2>/dev/null)
-  [[ $conf == (|random) ]] && conf=$(<$POKETERM_HOME/.partner 2>/dev/null)
+  [[ $conf == (|order|random) ]] && conf=${_poke_shown:-$(<$POKETERM_HOME/.partner 2>/dev/null)}
   local -a team=(${(z)conf})
   local lead=${team[1]:-pikachu}
   local w=40 n=${#art} top=$(( ${#art} / 2 - 2 ))
@@ -133,17 +133,25 @@ add-zsh-hook chpwd _poke_chpwd
 _poke_area=$(git rev-parse --show-toplevel 2>/dev/null)
 
 # greet on new Ghostty surfaces (the shader's Poké Ball intro opens onto this)
-# random partner each session: roll one, rebake the shader in the background and
-# signal Ghostty to reload (SIGUSR2). `poke party X` pins one instead.
-_poke_roll_partner() {
-  [[ $(<$POKETERM_HOME/party.conf 2>/dev/null) == (|random) ]] || return 0
-  local -a roster=($POKETERM_HOME/art/pmd/*(/N:t) $POKETERM_HOME/art/extra/*/anims.json(N:h:t))
+# A new partner every window: the next one in `poke roster` order (or a random one
+# after `poke random`). Ghostty compiles a window's shader before its shell starts,
+# so this window shows the partner the previous one baked, and we bake the next.
+# `poke party X` pins one instead.
+_poke_next_partner() {
+  local mode=$(<$POKETERM_HOME/party.conf 2>/dev/null)
+  [[ $mode == (|order|random) ]] || return 0
+  local -a roster=(${(f)"$($POKETERM_HOME/bin/poke roster)"})
   (( ${#roster} )) || return 0
-  local pick=${roster[RANDOM % ${#roster} + 1]}
+  local cur=$(<$POKETERM_HOME/.partner 2>/dev/null) pick
+  _poke_shown=$cur
+  if [[ $mode == random ]]; then
+    pick=${roster[RANDOM % ${#roster} + 1]}
+  else
+    pick=${roster[ ${roster[(Ie)$cur]} % ${#roster} + 1 ]}
+  fi
   print -r -- $pick > $POKETERM_HOME/.partner
   local py=$POKETERM_HOME/tools/.venv/bin/python; [[ -x $py ]] || py=python3
-  # (the short wait lets a just-launched Ghostty finish starting before the reload signal)
-  ( $py $POKETERM_HOME/tools/build.py --shader-only >/dev/null 2>&1 && sleep 0.8 && pkill -USR2 -x ghostty ) &!
+  ( $py $POKETERM_HOME/tools/build.py --shader-only >/dev/null 2>&1 ) &!
 }
 
 if [[ $TERM_PROGRAM == ghostty && -z $_POKETERM_GREETED ]]; then
@@ -156,7 +164,7 @@ if [[ $TERM_PROGRAM == ghostty && -z $_POKETERM_GREETED ]]; then
     local _py=$POKETERM_HOME/tools/.venv/bin/python; [[ -x $_py ]] || _py=python3
     ( $_py $POKETERM_HOME/tools/build.py --shader-only >/dev/null 2>&1 ) &!
   else
-    _poke_roll_partner
+    _poke_next_partner
     [[ ${POKETERM_GREET:-1} == 1 ]] && poke_encounter
   fi
 fi

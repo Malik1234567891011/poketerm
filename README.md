@@ -39,16 +39,13 @@ Uninstall with `~/poketerm/uninstall.sh`. It removes exactly those pieces.
   | Eevee | Swift: golden stars spiral out |
   | Mew | a psychic bubble swells and pops |
   | Snorlax | lands so hard the text shakes, with dust and impact lines |
-  | Voltorb | sparks, and Explosion when a command fails |
-  | Ditto | jelly wobble and goo splats |
   | Psyduck | Confusion rings from its aching head |
   | Jigglypuff | a burst of rainbow notes (it also sings when you go idle) |
   | Gengar | Shadow Ball |
   | Gastly | Smog clouds |
-  | Mimikyu | Shadow Claw |
   | Darkrai | Dark Void: a black hole opens, drinks in the light and collapses. Its party mates sleep with red nightmare Zs |
 
-  The ghosts and Darkrai don't hop at all: they vanish and reappear.
+  Gengar, Gastly and Darkrai don't hop at all: they vanish and reappear.
 - **Living ink**: text printed in four exact colours becomes an animated material.
   The shader recognises the colour on the GPU, so any program can use it.
 
@@ -81,7 +78,7 @@ Uninstall with `~/poketerm/uninstall.sh`. It removes exactly those pieces.
   - **after 1 min:** an aurora spreads across the sky
   - **after 3 min:** a meteor shower
   - **needs your permission:** a "!" pops up over your lead Pokémon
-  - **done:** a beam of light comes down on the party (with thunder if Pikachu or Voltorb is in it)
+  - **done:** a beam of light comes down on the party (with thunder if Pikachu is in it)
 
   How it gets there: the shader can only see pixels, so `state.zsh` writes an escape code that
   nudges palette colour 255 (`#eeeeee`) by an invisible 1-13 steps of blue. Ghostty passes the
@@ -93,7 +90,7 @@ Uninstall with `~/poketerm/uninstall.sh`. It removes exactly those pieces.
 
 ```
 poke                         show party + roster
-poke random                  a random partner every new window (default)
+poke order / poke random     a new partner every window: next in line (default) or random
 poke party pikachu           pin one partner
 poke party eevee gengar mew  pin up to three followers
 poke try [NAME]              show one in a new tab; plain `poke try` tours them in order
@@ -102,7 +99,7 @@ poke off / poke on           disable / enable the shader
 poke reload                  rebuild the shader (new tabs/windows pick it up)
 ```
 
-Roster: pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squirtle snorlax mew psyduck mimikyu gastly darkrai
+Roster: pikachu gengar jigglypuff eevee charmander bulbasaur squirtle snorlax mew psyduck gastly darkrai
 
 Set `POKETERM_GREET=0` in `~/.zshrc` before the source line to skip encounters.
 

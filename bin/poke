@@ -3,12 +3,12 @@
 #   poke                       show your party and options
 #   poke party pikachu gengar  pin up to 3 followers (run `poke` to list them)
 #   poke try [NAME]            show one in a new tab (no NAME: the next one, for a tour)
-#   poke random                a random partner every new window (the default)
+#   poke order | random        a new partner every window: next in line (default) or random
 #   poke wild [NAME] [shiny]   summon a wild encounter
 #   poke off | on              turn the shader effects off / back on
 #   poke reload                rebuild the shader and reload Ghostty
 H=${POKETERM_HOME:-${0:A:h:h}}
-SPECIES=(pikachu gengar jigglypuff ditto voltorb eevee charmander bulbasaur squirtle snorlax mew psyduck mimikyu gastly darkrai)
+SPECIES=(pikachu gengar jigglypuff eevee charmander bulbasaur squirtle snorlax mew psyduck gastly darkrai)
 SPECIES+=($H/art/extra/*/anims.json(N:h:t))   # local-only extras (art/extra/, not in git)
 
 reload() {
@@ -46,10 +46,11 @@ case $1 in
       || { print "$name is ready: open a new tab (⌘T) to see it"; exit 0; }
     print "$name sent to a new tab  ·  \`poke try\` again for the next one"
     ;;
-  random)
-    print random > $H/party.conf
-    print "a random partner joins you in every new Ghostty window"
+  order|random)
+    print $1 > $H/party.conf
+    [[ $1 == order ]] && print "a new partner every window, in order: $SPECIES" || print "a random partner every new window"
     ;;
+  roster) print -l $SPECIES ;;
   wild)
     POKETERM_HOME=$H source $H/shell/poketerm.zsh
     poke_encounter ${(U)2} $([[ $3 == shiny ]] && print 1)
@@ -63,8 +64,8 @@ case $1 in
   reload) reload ;;
   *)
     local conf=$(<$H/party.conf 2>/dev/null)
-    if [[ $conf == (|random) ]]; then print "party: random each window (now: $(<$H/.partner 2>/dev/null))"
-    else print "party: $conf (pinned — \`poke random\` to roll each window)"; fi
+    if [[ $conf == (|order|random) ]]; then print "party: ${conf:-order}, a new one each window (next: $(<$H/.partner 2>/dev/null))"
+    else print "party: $conf (pinned: \`poke order\` to rotate again)"; fi
     print "pokémon: $SPECIES"
     sed -n '2,8p' $0 | sed 's/^# \{0,1\}//'
     ;;
