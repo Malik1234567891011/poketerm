@@ -9,3 +9,4 @@ party.conf
 .try
 .try-last
 art/extra/
+shaders/poketerm.glsl
